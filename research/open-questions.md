@@ -2,23 +2,26 @@
 
 Resolve with primary sources or our own reproducible experiments. Don't paper over in prose.
 
-## Gating — MOSTLY RESOLVED (see `rules.md`)
+## Gating — RESOLVED (2-source verified, see `rules.md`)
 
-The ruleset is pinned in `rules.md` from the best available source (Wikipedia *Micro
-shogi*). Resolved: capture-flip promotion (mandatory, reversible), drops are
-**unrestricted** (no nifu / uchifuzume / last-rank ban; droppable with either face),
-trapped/no-move pieces are legal. Two genuine gaps remain before the full solve:
+The ruleset is pinned in `rules.md`, corroborated by **two independent sources** (EN +
+JA Wikipedia) that agree on every substantive rule. Resolved: capture-flip promotion
+(mandatory, reversible), unrestricted either-face drops (JA confirms 二歩・打ち歩詰め not
+prohibited), trapped/no-move pieces legal, **winning condition = checkmate** ("相手の玉
+将を詰めたほうが勝ち" → King-capture terminal), and **origin = Ōyama** (the Akatsuka claim
+was erroneous). Residual items, none of which block the build:
 
-- [ ] **Exact winning condition.** Not stated by the source. Default chosen:
-  checkmate, implemented as **King capture** (equivalent for win/loss). Confirm there
-  is no special terminal rule (no Dōbutsu-style "Try"/king-entry win). Low risk, but
-  verify before publishing a value.
-- [ ] **Repetition (sennichite) rule.** Not stated. Baseline: **repetition → draw**
-  (as in the Dōbutsu solver — unresolved-after-fixpoint = draw). Decide whether to
-  model the orthodox perpetual-check-loses refinement (adds fixpoint asymmetry, H3)
-  before the full solve.
-- [ ] **Primary source for origin/attribution** (Ōyama vs Akatsuka conflict) — needed
-  only for published prose, not for the solve.
+- [ ] **Repetition (sennichite) rule.** Undocumented in both sources. Baseline:
+  **repetition → draw** (as in the Dōbutsu solver — unresolved-after-fixpoint = draw).
+  Decide whether to model the orthodox perpetual-check-loses refinement (fixpoint
+  asymmetry, H3) before the full solve.
+- [ ] **Per-piece moves — code cross-check.** No source gives explicit per-piece
+  movement text ("pieces move like their shogi equivalents"); the engine uses standard
+  shogi moves. For 100% certainty, diff move generation against a code implementation
+  (Fairy-Stockfish / hachu / Jocly micro-shogi config) or a primary source (Ochi
+  Nobuyoshi's book). Low risk; do before publishing the solved value.
+- [ ] **King flip on capture** — inferred (king never promotes ⇒ never flips); confirm
+  incidentally via the code cross-check above. Very low risk.
 
 ## Tighten the estimates
 

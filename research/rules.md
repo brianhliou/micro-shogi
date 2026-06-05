@@ -6,11 +6,19 @@
 > movement is the standard shogi definition for that piece name), **[open]**
 > (under-documented; a default is chosen and flagged for verification).
 
-**Best available source:** Wikipedia, *Micro shogi* —
-<https://en.wikipedia.org/wiki/Micro_shogi>. A true *primary* source (original
-Japanese rules; the game is "五分摩訶将棋 / gofun maka shōgi", English name coined by
-Kerry Handscomb of NOST) would be better and is still worth finding — see
-`open-questions.md`.
+**Sources & verification.** Corroborated by **two independent encyclopedic sources**
+that agree on every substantive rule:
+- English Wikipedia, *Micro shogi* — <https://en.wikipedia.org/wiki/Micro_shogi>
+- Japanese Wikipedia, *五分摩訶将棋* (gofun maka shōgi) —
+  <https://ja.wikipedia.org/wiki/五分摩訶将棋>
+
+Residual gaps (neither source closes them): **per-piece movement** is given only as
+"pieces move like their shogi equivalents" (no explicit per-piece text anywhere
+found — we use the standard shogi move for each named piece), the **king-flip-on-
+capture** edge case (inferred from "king does not promote"), and **repetition**
+(undocumented in both). The 100% check on moves would be a code implementation
+(Fairy-Stockfish / hachu / Jocly variant config) or a primary source (Ochi
+Nobuyoshi's book, which introduced the game). See `open-questions.md`.
 
 ## Board & starting position
 
@@ -58,7 +66,7 @@ each individual move is the orthodox shogi move for that piece.
 
 Captured pieces go to the capturer's hand and may be dropped on a vacant square as
 a full move, as in standard shogi — **except all the usual restrictions are
-removed:** — [confirmed]
+removed:** — [confirmed, 2 sources; JA states 二歩・打ち歩詰めは禁止されていない verbatim]
 
 - A player **may drop a piece with either side facing up** (promoted OR unpromoted
   face — the hand piece is face-agnostic; the face is chosen at drop time).
@@ -80,17 +88,15 @@ rank). "Any trapped piece may be captured and returned to play as part of the
 opposing army." So a stalemated *single piece* is fine; this is not a loss
 condition. — [confirmed]
 
-## Winning condition — [open], default chosen
+## Winning condition — [confirmed: checkmate]
 
-Wikipedia does **not** state the win condition. Micro Shogi is a shogi variant
-with a King and orthodox piece moves, so the objective is **checkmate** (orthodox
-shogi). — inferred, not sourced.
+The objective is **checkmate**, like standard shogi — JA Wikipedia: "相手の玉将を
+詰めたほうが勝ちである" (the side that checkmates the opponent's king wins). No special
+terminal rule (no Dōbutsu-style "Try"/king-entry win) is mentioned by either source.
 
-> Solver decision: use **King capture as the terminal condition** (as our Dōbutsu
-> solver used Lion capture). Under optimal play this is equivalent to checkmate for
-> win/loss determination, and it is simpler and unambiguous to implement. Confirm
-> there is no special terminal rule (no "Try"/king-entry win as in Dōbutsu; none is
-> mentioned for Micro Shogi). — see `open-questions.md`.
+> Solver implementation: use **King capture as the terminal condition** (as our
+> Dōbutsu solver used Lion capture). Under optimal play this is equivalent to
+> checkmate for win/loss determination, and is simpler and unambiguous.
 
 ## Repetition (sennichite) — [open], default chosen
 
@@ -103,22 +109,26 @@ Wikipedia does not state a repetition rule. — not sourced.
 > model it before the full solve. The baseline draw-rule is correct for a first
 > pass and matches how Dōbutsu was solved.
 
-## Origin / history — [open], sources conflict
+## Origin / history — [resolved: Ōyama]
 
-- Wikipedia: English name by **Kerry Handscomb (NOST)**, who credits invention to
-  **Ōyama Yasuharu** (a famous professional). A custom set existed by the mid-1980s,
-  so it predates that. Exact year not stated.
-- An earlier secondary source (Grokipedia) attributed it to manga artist **Fujio
-  Akatsuka**, commissioned by Dai-Ichi Life. **This conflicts** with Wikipedia.
-- Do not assert an inventor/date in published prose until a primary source settles
-  it. — [open]
+- **Both** EN and JA Wikipedia credit invention to **Ōyama Yasuharu** (a famous
+  professional); introduced in Ochi Nobuyoshi's book; **existed by 1982**; English
+  name coined by **Kerry Handscomb (NOST)**.
+- The earlier "Fujio Akatsuka" attribution (Grokipedia, a single weak source) is
+  contradicted by both encyclopedias and is treated as **erroneous**.
+- Still cite a primary source before publishing the exact year. — [minor]
 
-## What this resolves vs the four pre-research ambiguities
+## Status vs the pre-research ambiguities (after 2-source verification)
 
-1. **Capture-flip promotion** → RESOLVED: on capture, mandatory flip; reversible.
-2. **Drop restrictions** → RESOLVED: none (no nifu, no uchifuzume, no last-rank
-   ban); plus drop with either face up.
-3. **Repetition** → OPEN: default draw (baseline), perpetual-check refinement TBD.
-4. **Last-rank / no-move legality** → RESOLVED: legal; trapped pieces allowed.
+1. **Capture-flip promotion** → RESOLVED (2 sources): on capture, mandatory flip; reversible.
+2. **Drop restrictions** → RESOLVED (2 sources): none (no nifu/uchifuzume/last-rank ban);
+   droppable on either face.
+3. **Last-rank / no-move legality** → RESOLVED: legal; trapped pieces allowed.
+4. **Winning condition** → RESOLVED (JA Wikipedia): checkmate (King-capture terminal).
+5. **Origin** → RESOLVED: Ōyama (both sources); Akatsuka claim erroneous.
 
-New opens surfaced: exact **win condition** statement, and the **origin** conflict.
+**Still open** (do not block the build; engine uses defaults):
+- **Repetition** — undocumented in both sources; baseline = draw.
+- **Per-piece moves** — sourced only as "standard shogi equivalents"; verify against a code
+  implementation (Fairy-Stockfish / hachu / Jocly) or a primary source for 100% certainty.
+- **King flip on capture** — inferred (king never promotes ⇒ never flips); very low risk.

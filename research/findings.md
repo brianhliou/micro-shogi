@@ -20,15 +20,17 @@ Full ruleset in `rules.md` (source: Wikipedia *Micro shogi*). Summary:
 - **Drops are unrestricted** — captured pieces enter the hand and re-drop as in shogi, but with
   **no nifu, no uchifuzume, no last-rank ban**, and may be dropped with **either face up**.
   Trapped/no-move pieces are legal. — [Wikipedia]
-- **Win condition** — checkmate (inferred; not stated). Solver uses King-capture as terminal.
-  — [open, see rules.md]
-- **Repetition** — not stated; baseline draw. — [open, see rules.md]
-- **Origin** — English name by Kerry Handscomb (NOST), invention credited to Ōyama Yasuharu
-  (Wikipedia); an earlier secondary source said Fujio Akatsuka — **conflict**. — [open]
+- **Win condition** — **checkmate** ("相手の玉将を詰めたほうが勝ち"); solver uses King-capture
+  terminal. — [JA Wikipedia, confirmed]
+- **Repetition** — undocumented in both sources; baseline draw. — [open, see rules.md]
+- **Origin** — invention credited to **Ōyama Yasuharu** (both EN + JA Wikipedia); existed by
+  1982; English name by Kerry Handscomb (NOST). The earlier "Akatsuka" claim was erroneous.
+  — [2 sources]
 
-> The state-space *upper bound* below does not depend on the open items (it counts
-> arrangements); the *reachable* count and the *solve* depend on win-condition + repetition,
-> both of which have working defaults (King-capture terminal; repetition = draw).
+> Ruleset corroborated by two independent sources (EN + JA Wikipedia); see `rules.md`. The
+> state-space *upper bound* below does not depend on any rule detail (it counts arrangements);
+> the *reachable* count and *solve* depend on the (now-confirmed) win condition and the
+> repetition default (draw).
 
 ---
 
