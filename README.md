@@ -65,6 +65,7 @@ research/
   open-questions.md  — the backlog (ruleset, exact reachable count, calibration)
   cost-model.md      — $ analysis with 2026 cloud/bare-metal pricing
   architecture.md    — distributed strong-solve design (SCC staging, coordinator, hurdles)
+  funding.md         — funding/collaboration strategy + live 2026 programs (verified)
   repro/
     statespace_upperbound.py  — the validated enumerator
     upper_bound.txt           — its committed output
