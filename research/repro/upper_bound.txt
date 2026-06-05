@@ -1,0 +1,60 @@
+
+=== dobutsu (3x4) : 12 squares ===
+all-arrangements upper bound = 1,567,925,964
+  0 in hand: 638,668,800
+  1 in hand: 638,668,800
+  2 in hand: 242,161,920
+  3 in hand: 44,098,560
+  4 in hand: 4,134,240
+  5 in hand: 190,080
+  6 in hand: 3,564
+
+=== micro shogi (4x5) : 20 squares ===
+all-arrangements upper bound = 3,915,109,365,634,620
+  0 in hand: 2,746,132,778,188,800
+  1 in hand: 998,593,737,523,200
+  2 in hand: 156,030,271,488,000
+  3 in hand: 13,602,639,052,800
+  4 in hand: 725,140,684,800
+  5 in hand: 24,290,426,880
+  6 in hand: 502,329,600
+  7 in hand: 5,909,760
+  8 in hand: 30,780
+
+=== minishogi (5x5) : 25 squares ===
+all-arrangements upper bound = 30,995,263,558,526,805,000
+  0 in hand: 20,405,878,951,772,160,000
+  1 in hand: 8,745,376,693,616,640,000
+  2 in hand: 1,651,904,486,572,032,000
+  3 in hand: 179,158,758,653,952,000
+  4 in hand: 12,358,471,200,768,000
+  5 in hand: 568,120,025,088,000
+  6 in hand: 17,700,705,792,000
+  7 in hand: 370,906,905,600
+  8 in hand: 5,033,080,800
+  9 in hand: 40,240,800
+  10 in hand: 145,800
+
+=== validation vs Tanaka 2009 ===
+dobutsu computed   1,567,925,964
+dobutsu published  1,567,925,964
+MATCH
+breakdown match: True
+
+dobutsu reachable/upper = 0.1574
+dobutsu canonical/reachable = 0.8671
+
+minishogi upper = 3.100e+19
+minishogi reachable (arXiv est) = 2.380e+18
+minishogi reachable/upper = 0.0768
+
+=== micro shogi (4x5) projection ===
+upper bound (exact)         3,915,109,365,634,620
+reachable bracket  ~3.006e+14 .. 6.163e+14
+reachable (dobutsu ratio)   6.163e+14
+canonical (our-fold)        5.343e+14
+
+storage for complete canonical tablebase:
+  W/L/D only            133.6 TB
+  DTM ~10 bit           667.9 TB
+  DTM+slack 16 bit     1068.7 TB

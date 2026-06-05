@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Rust (when a solver lands)
+/target/
+**/*.rs.bk
+
+# tablebase artifacts (large; never commit)
+*.tb
+*.ctb
+*.tb.bin
+*.bin
+
+# OS
+.DS_Store
