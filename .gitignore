@@ -4,7 +4,7 @@ __pycache__/
 .venv/
 
 # Rust (when a solver lands)
-/target/
+target/
 **/*.rs.bk
 
 # tablebase artifacts (large; never commit)

@@ -28,8 +28,11 @@ trapped/no-move pieces are legal. Two genuine gaps remain before the full solve:
 - [ ] **Per-edge cost and fixpoint pass-count calibration.** The compute estimate carries ~10×
   uncertainty (40–475 core-years). The partial-EGTB milestone measures real ns/edge and the
   number of passes on actual hardware, collapsing the range before the cluster go/no-go.
-- [ ] **Average branching factor for Micro Shogi.** Estimated ~16 (Dōbutsu measured 9.435);
-  drives the ~100 PB shuffle figure. Measure on the rules engine.
+- [~] **Average branching factor.** Measured early-game via `perft` (`repro/perft.txt`):
+  9 → 12.5 by depth 6 and climbing. With unrestricted either-face drops, mid/late-game branching
+  is likely **≥16** (each hand piece → ~empty-squares × 2 faces on a 20-square board), so the
+  cost model's ~16 may be *low* — nudging the ~100 PB shuffle / ~150 core-year figures up. Full
+  reachable-set average pending the solver.
 - [ ] **Max distance-to-mate (depth).** Sets DTM bit-width and the number of fixpoint
   rounds/supersteps. Dōbutsu was 173; Micro is presumably deeper. Unknown until partially
   solved.

@@ -51,8 +51,10 @@ The cheap, high-leverage milestones come before any cluster spend:
 1. **Nail the exact ruleset** — capture-flip promotion, drop restrictions, repetition.
    *(mostly done — see [`research/rules.md`](research/rules.md); only win-condition + repetition
    refinement remain, both with working defaults)*
-2. **Rules engine + brute-force validator** (forward minimax on small endgames; there is no
-   external oracle for Micro Shogi). *(open)*
+2. **Rules engine** ✅ + **brute-force validator** — `solver/` (Rust). Engine done and tested:
+   move-gen with sliders, capture-flip promotion, either-face drops, king-capture terminal; 8
+   unit tests + `perft` self-consistency (`research/repro/perft.txt`). Validator (forward minimax
+   on small endgames; no external oracle for Micro Shogi) *next*. *(in progress)*
 3. **Calibration solve** — a smaller sibling game (fewer piece types or a smaller board) run
    end-to-end in RAM. Proves the pipeline and *calibrates the real per-edge cost*, collapsing the
    10× compute uncertainty before the go/no-go on the full run. (Drop-shogi has no clean N-piece

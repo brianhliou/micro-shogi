@@ -1,0 +1,13 @@
+[package]
+name = "micro-shogi-solver"
+version = "0.1.0"
+edition = "2021"
+description = "A from-scratch Micro Shogi (4x5 drop-shogi) rules engine and tablebase solver."
+
+[lib]
+name = "microshogi"
+path = "src/lib.rs"
+
+[profile.release]
+opt-level = 3
+lto = true
