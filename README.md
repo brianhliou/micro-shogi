@@ -48,19 +48,23 @@ bracketed from that upper bound using ratios calibrated on Dōbutsu (0.157) and 
 **Scoping / research.** No solver yet. The validated state-space enumerator is the only code.
 The cheap, high-leverage milestones come before any cluster spend:
 
-1. **Nail the exact ruleset** from a primary source — capture-flip promotion, drop
-   restrictions, repetition handling. This gates everything. *(open)*
+1. **Nail the exact ruleset** — capture-flip promotion, drop restrictions, repetition.
+   *(mostly done — see [`research/rules.md`](research/rules.md); only win-condition + repetition
+   refinement remain, both with working defaults)*
 2. **Rules engine + brute-force validator** (forward minimax on small endgames; there is no
    external oracle for Micro Shogi). *(open)*
-3. **Partial endgame tablebase** (few-piece material buckets, GB-scale) — proves the pipeline
-   and *calibrates the real per-edge cost*, collapsing the 10× compute uncertainty before the
-   go/no-go on the full run. *(open)*
+3. **Calibration solve** — a smaller sibling game (fewer piece types or a smaller board) run
+   end-to-end in RAM. Proves the pipeline and *calibrates the real per-edge cost*, collapsing the
+   10× compute uncertainty before the go/no-go on the full run. (Drop-shogi has no clean N-piece
+   tablebase — material is conserved — so the partial is a smaller *instance*, not a piece-count
+   slice.) *(open)*
 4. **Full strong solve** on bare-metal — only after 1–3. *(open)*
 
 ## Layout
 
 ```
 research/
+  rules.md           — the exact ruleset the solver is built against (milestone #1)
   findings.md        — verified facts ledger (numbers + sources)
   open-questions.md  — the backlog (ruleset, exact reachable count, calibration)
   cost-model.md      — $ analysis with 2026 cloud/bare-metal pricing

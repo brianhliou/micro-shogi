@@ -2,19 +2,23 @@
 
 Resolve with primary sources or our own reproducible experiments. Don't paper over in prose.
 
-## Gating (blocks everything downstream)
+## Gating — MOSTLY RESOLVED (see `rules.md`)
 
-- [ ] **Exact Micro Shogi ruleset from a primary/authoritative source.** Specifically:
-  - The precise capture-flip promotion cycle and whether promotion is *only* on capture.
-  - Drop restrictions: is there a two-pawn (nifu) rule? A drop-pawn-mate (uchifuzume) ban?
-    Any restriction on dropping a piece where it would have no legal move (e.g. pawn/knight on
-    the last rank)?
-  - Repetition (sennichite): draw, or loss for the perpetual-checking side? This changes the
-    fixpoint (perpetual-check asymmetry is harder than a symmetric draw rule).
-  - Whether an unpromoted forward-only piece may legally occupy the last rank (no promotion
-    zone means the standard "must promote" rule may not apply).
-  - **Why it gates:** solving the wrong ruleset produces a worthless tablebase. The value of
-    the game and the graph structure both depend on these.
+The ruleset is pinned in `rules.md` from the best available source (Wikipedia *Micro
+shogi*). Resolved: capture-flip promotion (mandatory, reversible), drops are
+**unrestricted** (no nifu / uchifuzume / last-rank ban; droppable with either face),
+trapped/no-move pieces are legal. Two genuine gaps remain before the full solve:
+
+- [ ] **Exact winning condition.** Not stated by the source. Default chosen:
+  checkmate, implemented as **King capture** (equivalent for win/loss). Confirm there
+  is no special terminal rule (no Dōbutsu-style "Try"/king-entry win). Low risk, but
+  verify before publishing a value.
+- [ ] **Repetition (sennichite) rule.** Not stated. Baseline: **repetition → draw**
+  (as in the Dōbutsu solver — unresolved-after-fixpoint = draw). Decide whether to
+  model the orthodox perpetual-check-loses refinement (adds fixpoint asymmetry, H3)
+  before the full solve.
+- [ ] **Primary source for origin/attribution** (Ōyama vs Akatsuka conflict) — needed
+  only for published prose, not for the solve.
 
 ## Tighten the estimates
 

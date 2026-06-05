@@ -165,6 +165,9 @@ becomes a random disk seek — and random disk is 100–1000× slower than RAM.
 
 1. Exact ruleset from a primary source *(gates all)*.
 2. Rules engine + brute-force forward-minimax validator *(≈free)*.
-3. Partial EGTB — few-piece buckets, GB-scale — proves the pipeline and **calibrates per-edge
-   cost / pass count**, collapsing the 10× compute uncertainty *(≈free)*.
+3. Calibration solve — a smaller sibling game (fewer piece types / smaller board) run
+   end-to-end in RAM — proves the pipeline and **calibrates per-edge cost / pass count**,
+   collapsing the 10× compute uncertainty *(≈free)*. (Drop-shogi has no clean N-piece tablebase —
+   material is conserved — so the partial is a smaller *instance*, not a piece-count slice; a
+   mate-in-≤D cut of the real game is the first true subset.)
 4. Full strong solve on bare-metal — only after 1–3, with a tightened estimate.

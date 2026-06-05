@@ -8,22 +8,27 @@ reproduces a known published answer), **[estimate]** (bracketed, with calibratio
 
 ## The game
 
-- **Board** — 4×5 = **20 squares**. — [needs source] (Wikipedia: *Micro shogi*)
-- **Pieces, 5 per side** — King, Gold, Silver, Bishop, Pawn. Total 10 pieces. — [needs source]
-- **Promotion is by capture-flip** — no promotion zone; a piece flips to its reverse when it
-  captures (mandatory), and a promoted piece flips back when *it* captures. Reverses:
-  King↔(blank), Gold↔Rook, Silver↔Lance, Bishop↔Tokin, Pawn↔Knight. — [needs source]
-- **Drops** — captured pieces enter the hand and can be re-dropped (standard shogi drop rule),
-  reverting to base form. — [needs source]
-- **Origin** — attributed to Fujio Akatsuka (manga artist), 1970s–80s, as a promotional game.
-  Date and attribution conflict across secondary sources. — [needs source]
+Full ruleset in `rules.md` (source: Wikipedia *Micro shogi*). Summary:
 
-> ⚠️ The **exact** ruleset (repetition/sennichite handling, drop restrictions such as
-> two-pawn/nifu or drop-pawn-mate bans, whether an unpromoted piece may sit on the last rank
-> given there is no promotion zone) is **not yet established from a primary source**. These
-> rules change both the game graph and its value. This is the gating open question — see
-> `open-questions.md`. The state-space *upper bound* below does not depend on these details
-> (it counts arrangements); the *reachable* count and the *solve* do.
+- **Board** — 4×5 = **20 squares**. — [Wikipedia]
+- **Pieces, 5 per side** — King, Gold, Silver, Bishop, Pawn (total 10). — [Wikipedia]
+- **Setup** — each player: nearest rank `S G B K` (King in right corner) + a Pawn in front of
+  the King. — [Wikipedia]
+- **Promotion is by capture-flip** — no promotion zone; a piece flips to its reverse when it
+  captures (mandatory), and flips back when the promoted piece captures. Reverses:
+  King↔(blank), Gold↔Rook, Silver↔Lance, Bishop↔Tokin, Pawn↔Knight. — [Wikipedia]
+- **Drops are unrestricted** — captured pieces enter the hand and re-drop as in shogi, but with
+  **no nifu, no uchifuzume, no last-rank ban**, and may be dropped with **either face up**.
+  Trapped/no-move pieces are legal. — [Wikipedia]
+- **Win condition** — checkmate (inferred; not stated). Solver uses King-capture as terminal.
+  — [open, see rules.md]
+- **Repetition** — not stated; baseline draw. — [open, see rules.md]
+- **Origin** — English name by Kerry Handscomb (NOST), invention credited to Ōyama Yasuharu
+  (Wikipedia); an earlier secondary source said Fujio Akatsuka — **conflict**. — [open]
+
+> The state-space *upper bound* below does not depend on the open items (it counts
+> arrangements); the *reachable* count and the *solve* depend on win-condition + repetition,
+> both of which have working defaults (King-capture terminal; repetition = draw).
 
 ---
 
