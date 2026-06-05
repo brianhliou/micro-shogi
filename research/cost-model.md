@@ -5,6 +5,14 @@ positions) and 2026 cloud/bare-metal pricing (sources at bottom; spot prices are
 and volatile). The compute estimate carries ~10× uncertainty until the partial-EGTB milestone
 calibrates it.
 
+> ⚠ **Sizing basis correction (see `findings.md` → "the index domain is larger").** Everything
+> below is sized to the **reachable** count (~5×10¹⁴). A combinatorial-rank solver (the only
+> scalable index; MPHF-over-reachable is infeasible at this scale) stores a slot per **arrangement**,
+> ~7.8× more (~3.9×10¹⁵ LR-folded). On that basis the working set is **~1 PB**, compute
+> **~660–1,200 core-years**, cost **~$40–70k bare-metal (~$150–280k cloud)** — multiply the figures
+> below by ~7–8×. The reachable-based numbers below remain the *compressed-artifact* and
+> *floor* values. Carried from `../shogi4`, 2026-06-05.
+
 ## What the job needs
 
 | Resource | Quantity | Notes |

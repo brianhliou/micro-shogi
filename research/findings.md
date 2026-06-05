@@ -143,6 +143,43 @@ From canonical ≈ 5×10¹⁴ (see `repro/upper_bound.txt`):
   - Binding constraint is **CPU**, not I/O: a ~1-month run ⇒ ~1,800 cores ⇒ ~16–20 NVMe nodes;
     those nodes carry the I/O and storage with headroom.
 
+### ⚠ Correction — the figures above are reachable-based; the *index domain* is larger
+
+Carried from `../shogi4`, which hit this head-on when its dense ranking function was built and
+its `N` came out to exactly 2× the arrangement upper bound.
+
+The numbers above (134 TB, ~150 core-years) are sized to the **canonical *reachable*** count
+(~5×10¹⁴). That is the footprint **only if the solver can index reachable-only**. At this scale it
+cannot, and the combinatorial "canonical key" in `architecture.md` does not:
+
+- **Reachable-only indexing needs an MPHF** over the reachable keys (Dōbutsu's 333 MB trick).
+  Building one requires holding all ~5×10¹⁴ keys (~4 PB) during construction — infeasible.
+  Dōbutsu's MPHF worked because 2.5×10⁸ keys fit in RAM; **it does not scale up.**
+- **A combinatorial canonical key** (closed-form rank over a material bucket's placements — the
+  scalable option, used by 7-piece chess EGTBs / Lomonosov) necessarily spans **all arrangements**
+  of each bucket (legal + illegal + unreachable slots), not the reachable subset. Summed over
+  buckets, the key space is the **LR-folded *arrangement* count ≈ 3.9×10¹⁵**, ~7.8× the folded
+  *reachable* ~5×10¹⁴. So `findings` line "canonical = what a solver stores ~5×10¹⁴" folded the
+  wrong base (it folded reachable, not arrangements).
+
+| | reachable basis (as written above) | **arrangement basis (a combinatorial-rank solver)** |
+|---|---|---|
+| W/L/D flat array | 134 TB | **~1 PB** (LR-folded) |
+| edge-ops / compute | 1.6×10¹⁶ → ~150 core-years | **~1.25×10¹⁷ → ~660–1,200 core-years** |
+| cost (bare-metal) | ~$10–15k | **~$40–70k** (cloud ~$150–280k) |
+
+The reachable figure (~5×10¹⁴ / 134 TB) stays valid as (a) the **compressed downloadable artifact**
+*after* solving (post-hoc you can enumerate + pack reachable) and (b) the theoretical floor — just
+not as the **working** footprint. Net: Micro is genuinely **PB-scale, ~$40–70k+**, which is exactly
+why `../shogi4` (4×4, ~19× smaller arrangement domain, ~$5–15k) is the right run to de-risk the
+pipeline on first. The measured ns/edge (~167) and the SCC/push architecture are unaffected — only
+the *count of slots* changes. **[estimate — carried from shogi4, 2026-06-05]**
+
+> Caveat / open: this assumes the `architecture.md` canonical key is a combinatorial rank over
+> arrangements. If a feasible reachable-only index exists at 5×10¹⁴, the original figures stand —
+> but none is known, and the MPHF route is ruled out by construction cost. Worth nailing down in
+> `architecture.md`.
+
 ---
 
 ## State-space vs game-tree (a number-hygiene note carried from the sibling repo)
