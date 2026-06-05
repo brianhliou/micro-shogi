@@ -138,6 +138,126 @@ pub fn solve(start: &Position) -> Solved {
     }
 }
 
+/// Push-based retrograde: BFS outward from resolved positions, each edge touched
+/// once. A position wins as soon as one child is a loss; loses when its last child
+/// resolves to a win (counter hits 0); a position with a drawing child never has
+/// its counter reach 0 and is left a draw. Unlike the Jacobi `solve`, this never
+/// re-scans a draw — essential for drop-shogi, which is ~70% draws.
+///
+/// Reverse adjacency (predecessors) is built by transposing the forward edges we
+/// can already generate — no unmove-generator needed for the in-RAM calibration.
+/// Produces values identical to `solve` (cross-checked); use this one at scale.
+pub fn solve_push(start: &Position) -> Solved {
+    let (keys, index) = enumerate(start);
+    let n = keys.len();
+    let mut value = vec![0i32; n]; // 0 = unknown/draw
+    let mut nchild = vec![0u32; n];
+    let mut indeg = vec![0u32; n];
+    let mut resolved_no_children = vec![false; n]; // terminal-win or no-move
+    let mut queue: VecDeque<u32> = VecDeque::new();
+
+    // pass 1: classify, count children, accumulate in-degrees
+    for id in 0..n {
+        let p = unpack(keys[id]);
+        let ms = p.moves();
+        if ms.iter().any(|m| p.is_terminal_win_move(m)) {
+            value[id] = 1; // win in 1 (capture the king)
+            resolved_no_children[id] = true;
+            queue.push_back(id as u32);
+            continue;
+        }
+        if ms.is_empty() {
+            value[id] = -2; // no legal move = loss
+            resolved_no_children[id] = true;
+            queue.push_back(id as u32);
+            continue;
+        }
+        for m in &ms {
+            let cid = *index.get(&canonical_key(&p.make(m))).unwrap();
+            indeg[cid as usize] += 1;
+        }
+        nchild[id] = ms.len() as u32;
+    }
+
+    // CSR for predecessors (transpose of forward edges)
+    let mut par_off = vec![0u32; n + 1];
+    for i in 0..n {
+        par_off[i + 1] = par_off[i] + indeg[i];
+    }
+    let total_edges = par_off[n] as usize;
+    let mut par_idx = vec![0u32; total_edges];
+    let mut fill: Vec<u32> = par_off[..n].to_vec();
+    // pass 2: fill predecessor lists
+    for id in 0..n {
+        if resolved_no_children[id] {
+            continue;
+        }
+        let p = unpack(keys[id]);
+        for m in &p.moves() {
+            let cid = *index.get(&canonical_key(&p.make(m))).unwrap() as usize;
+            par_idx[fill[cid] as usize] = id as u32;
+            fill[cid] += 1;
+        }
+    }
+    drop(fill);
+    drop(indeg);
+
+    // BFS propagation: each edge processed once
+    let mut cnt = nchild;
+    let mut edges = 0u64;
+    let t = Instant::now();
+    while let Some(cid) = queue.pop_front() {
+        let cv = value[cid as usize];
+        let lo = par_off[cid as usize] as usize;
+        let hi = par_off[cid as usize + 1] as usize;
+        for &pid in &par_idx[lo..hi] {
+            edges += 1;
+            let pid = pid as usize;
+            if value[pid] != 0 {
+                continue; // already resolved
+            }
+            if cv < 0 {
+                // child is a loss for its mover (parent's opponent) ⇒ parent wins
+                value[pid] = -cv + 1;
+                queue.push_back(pid as u32);
+            } else {
+                // child is a win for the opponent ⇒ doesn't help the parent
+                cnt[pid] -= 1;
+                if cnt[pid] == 0 {
+                    // all children win for the opponent ⇒ parent loses; this last
+                    // (max-distance) child sets the loss distance
+                    value[pid] = -(cv + 1);
+                    queue.push_back(pid as u32);
+                }
+            }
+        }
+    }
+    let fixpoint_ns = t.elapsed().as_nanos();
+
+    Solved {
+        keys,
+        index,
+        values: value,
+        edges,
+        rounds: 0, // not applicable to the push method
+        fixpoint_ns,
+    }
+}
+
+/// Compare two solves position-by-position (same start ⇒ same deterministic ids).
+/// Returns the number of value mismatches (0 = identical).
+pub fn cross_check(a: &Solved, b: &Solved) -> u64 {
+    assert_eq!(a.keys.len(), b.keys.len(), "different position counts");
+    let mut mism = 0u64;
+    for i in 0..a.keys.len() {
+        debug_assert_eq!(a.keys[i], b.keys[i], "enumeration order diverged");
+        if a.values[i] != b.values[i] {
+            mism += 1;
+        }
+    }
+    mism
+}
+
 /// Full-table consistency audit: every stored value must equal the minimax of its
 /// children's values (and immediate-win/no-move positions must be +1 / -2). Returns
 /// the number of inconsistent positions (0 = pass).

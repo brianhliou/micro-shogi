@@ -114,9 +114,17 @@ labeling, provably correct given correct base cases). [measured]
 > Validation note: an independent *forward-minimax* cross-check proved intractable at this
 > scale — the game is drawish + cyclic, so forward search is exponential and deep (it
 > overflowed the stack). The rigorous validation is the **consistency audit** (a
-> distance-consistent minimax fixpoint is correct), plus perft symmetry and hand-verified
-> mate tests; a **code-implementation diff** (Fairy-Stockfish / hachu) remains the
-> pre-publication independent check (`open-questions.md`).
+> distance-consistent minimax fixpoint is correct) plus a **push-vs-pull cross-check**: two
+> independent retrograde algorithms (Jacobi `solve` and counter-BFS `solve_push`) produce
+> **identical** values on KP (0 mismatches). A code-implementation diff (Fairy-Stockfish /
+> hachu) remains the pre-publication move-gen check (`open-questions.md`).
+
+> **Pull-based Jacobi is non-viable at scale on drop-shogi.** It rescans every undecided
+> position each round; draws are *never* decided, so ~70% of positions are rescanned for
+> ~max-DTM rounds → `O(draws × branching × maxDTM)`. Dōbutsu survived this (1.2% draws);
+> KPG (≈70% draws) ran **>8 h without converging** and was killed. The **push-based**
+> counter-BFS touches each edge once and never revisits a draw — KP: 10.8 s → **1.15 s**
+> (~9×), and the gain grows with max-DTM. The full solve must be push-based (and streaming).
 
 ## Sizing the complete Micro Shogi tablebase
 

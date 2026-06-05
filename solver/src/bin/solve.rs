@@ -5,7 +5,7 @@
 //!   cargo run --release --bin solve            # KP, KPG, KPGS
 //!   cargo run --release --bin solve KPGS       # one rung
 
-use microshogi::retro::{audit, rung_start, solve};
+use microshogi::retro::{audit, cross_check, rung_start, solve, solve_push};
 use microshogi::{format, unpack};
 use std::time::Instant;
 
@@ -25,7 +25,7 @@ fn main() {
         };
         println!("\n=== rung {name}   start {} ===", format(&start));
         let t = Instant::now();
-        let s = solve(&start);
+        let s = solve_push(&start);
         let total = t.elapsed();
         let n = s.keys.len();
 
@@ -58,14 +58,23 @@ fn main() {
         println!("  W / L / D                         : {w} / {l} / {d}");
         println!("  max DTM                           : {maxdtm} plies");
         println!("  avg branching (reachable)         : {bf:.3}");
-        println!("  fixpoint rounds                   : {}", s.rounds);
-        println!("  edge-ops / ns-per-edge            : {} / {ns_edge:.0} ns", s.edges);
-        println!("  solve wall-clock                  : {total:?}");
+        println!("  edge-ops (each once) / ns-per-edge : {} / {ns_edge:.0} ns", s.edges);
+        println!("  solve wall-clock (push)           : {total:?}");
         let bad = audit(&s);
+        // cross-validate push against the independent pull-based Jacobi on small rungs
+        let xmis: Option<u64> = if n <= 1_000_000 {
+            Some(cross_check(&s, &solve(&start)))
+        } else {
+            None
+        };
+        let pass = bad == 0 && xmis.map_or(true, |m| m == 0);
+        let xstr = match xmis {
+            Some(m) => format!("push-vs-pull={m}"),
+            None => "push-vs-pull=skipped(>1M)".to_string(),
+        };
         println!(
-            "  VALIDATION  consistency-audit={}  -> {}",
-            bad,
-            if bad == 0 { "PASS" } else { "FAIL" }
+            "  VALIDATION  audit={bad}  {xstr}  -> {}",
+            if pass { "PASS" } else { "FAIL" }
         );
     }
 }
