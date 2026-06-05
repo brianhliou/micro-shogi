@@ -77,6 +77,56 @@ task** for the distributed solve.
 - Partial results are **useful before completion**: solve all ≤k-piece buckets first and you
   already have a real endgame tablebase the (future) explorer can probe.
 
+## The central risk: RAM-speed vs disk-random edge access
+
+This is the dominant project risk — bigger than position count, branching, or
+pricing. It decides whether the solve costs ~$4k or is infeasible. **One
+sentence:** at 5×10¹⁴ positions the table can't fit in memory, so unless the
+computation is engineered carefully, every one of the ~1.6×10¹⁶ value-lookups
+becomes a random disk seek — and random disk is 100–1000× slower than RAM.
+
+- **Root cause — a speed cliff.** RAM read ≈ 100 ns; random SSD read ≈
+  10,000–100,000 ns. The solve is ~1.6×10¹⁶ lookups. Multiply the count by 100 ns
+  vs 10,000 ns: same computation, same result, **~$4k vs ~$400k.** The bill is set
+  by *where the value lives when you reach for it*, not by the arithmetic.
+- **Trigger — the data doesn't fit in RAM.** 5×10¹⁴ positions × even 1 byte =
+  500 TB; a node holds ~0.25–1 TB, so ~99.9% of the table is on disk at any
+  instant. **Dōbutsu hid this entirely** (214M × 32 B = 7 GB fits in RAM, every
+  access free, the naive solver "just worked"). That free lunch vanishes here.
+- **Why naive = random seeks.** A position's neighbors have canonical keys at
+  essentially random locations across the 500 TB; "look up the neighbor's value"
+  is a random disk jump. 10¹⁶ random jumps = death by seek.
+- **The fix (this IS the architecture) — convert random access into sequential
+  streams.** Partition the space into shards small enough that one fits in a
+  node's RAM; process a shard entirely in-RAM. For every edge pointing *out* of
+  the shard, don't follow it — emit a message "position Y needs the value of X"
+  to an outbox. Group messages by destination shard and **stream** them in bulk
+  (sequential write + read); each shard consumes its inbox as a batch. You've
+  replaced 10¹⁶ random seeks with a few giant sequential passes + in-RAM sorts,
+  and sequential disk is ~100–1000× faster per byte. Near-RAM effective speed
+  recovered.
+- **The mental model.** This is the MapReduce/Pregel **shuffle** — equivalently,
+  repartitioning a stream by key through Kafka (never random-access across
+  partitions; produce to the destination, consume in order). In DB terms it's the
+  gap between an index-nested-loop join (random I/O, dies on big data) and a
+  sort-merge/hash join (sequential, scales): same result, ~100× apart, purely
+  access-pattern engineering. Same reason LSM stores batch into sorted SSTables
+  instead of random in-place updates.
+- **Why it's a RISK, not a given.** (1) Real distributed-systems engineering — a
+  purpose-built Pregel/Spark for this one graph. (2) Drops cycle the material
+  graph, so the big core can't be cleanly staged; it needs an iterative fixpoint =
+  *multiple* shuffle passes, and slow convergence multiplies shuffle volume and
+  cost. (3) The graph's locality is unknown until measured (neighbor scatter,
+  long-range drop edges, fixpoint round count) — these set how much shuffle you
+  pay. (4) RAM budgeting is fiddly: value array + per-position counters +
+  inbox/outbox buffers share node RAM; mis-size a shard and you spill back to
+  disk-random.
+- **The failure mode isn't a bug** — it's building it correctly and *discovering*
+  the effective rate is 1,000–5,000 ns/edge instead of 150–500, because this graph
+  forces more shuffle than hoped. That is the 10× in the cost matrix
+  (`cost-model.md`), and exactly what the partial-EGTB milestone measures before
+  any cluster spend.
+
 ## Holes & hurdles
 
 - **H1 — No external oracle.** clausecker is Dōbutsu-only; a 5×10¹⁴ table has nothing external
@@ -90,9 +140,9 @@ task** for the distributed solve.
   perpetual-check-loses rules.
 - **H4 — Drops cycle the material graph.** Addressed by SCC condensation; the big SCC remains
   the irreducible external-memory core.
-- **H5 — Random-I/O death.** Naive retrograde does random reads/writes over a 100 TB+ array;
-  seeks dominate (100–1000× slowdown). Must restructure as sequential streaming + external
-  sort/merge, or partition so each bucket's working set fits a node's RAM. Make-or-break.
+- **H5 — Random-I/O death.** The dominant cost driver — see "The central risk" above. Naive
+  retrograde does random reads/writes over a 500 TB+ array; the entire architecture exists to
+  convert that into sequential streaming. Make-or-break.
 - **H6 — Multi-week job will fail mid-run.** Spot reclaim, node death. Needs idempotent,
   generation-stamped checkpoints or a late failure is catastrophic.
 - **H7 — Completeness proof.** Proving *all* reachable/legal positions were enumerated — a

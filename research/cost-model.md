@@ -24,6 +24,62 @@ The ~100 PB shuffle is **not a cost line** if you keep it **node-local** (bare-m
 2. **Durable storage-months** (secondary) = TB × $/TB-mo × duration.
 3. **Egress** = the trap. Engineer it to ~$0; if you don't, it dwarfs everything.
 
+## Compute cost — the decomposition
+
+The whole compute bill is one product:
+
+    cost = (edge-operations) × (time per edge-op) × ($/core-second)
+
+Two factors are pinned; one carries the entire ~10× uncertainty.
+
+**Edge-operations — pinned at ~1.6×10¹⁶.** Retrograde must touch every
+(position, move) edge to know the value — the information-theoretic floor.
+positions (~5–6×10¹⁴; all-legal ≈ 1.2× reachable) × avg-branching (~16; Dōbutsu
+*measured* 9.435) × ~2 passes (push-based: one forward to set each position's
+undecided-children counter, one backward to propagate). Solid to ±2×. Caveat: a
+*pull-based* Jacobi solve (rescan all unknowns every round — our Dōbutsu
+approach) balloons this ~5–10×, so push-vs-pull is a free 5–10× lever.
+
+**$/core-hour — a known menu.** Hetzner bare-metal ~$0.006; GCP spot ~$0.015;
+AWS storage-opt spot ~$0.0275.
+
+**Time per edge-op — the entire spread, 150 ns → 100,000 ns.** An edge-op is
+decode → (un)move-gen → canonicalize the neighbor key → **look up its value** →
+decrement/compare. The lookup dominates: RAM-resident ~150 ns (*measured* — the
+Dōbutsu solver's optimized rate); random SSD ~10,000–100,000 ns, a 100–1000×
+cliff. At 5×10¹⁴ the value array does NOT fit in RAM, so the effective rate is
+set entirely by whether the external-memory architecture keeps access
+sequential/RAM-speed or lets it degrade to disk-random. **This is the dominant
+risk — see `architecture.md` → "The central risk".**
+
+### Cost matrix (bare-metal $0.006/core-hr; ×4.5 for AWS spot)
+
+| Scenario | ns/edge | core-years | bare-metal $ | AWS spot $ |
+|---|---|---|---|---|
+| **Floor** — push, sequential streaming, RAM-speed | 150 | ~76 | **~$4k** | ~$18k |
+| **Realistic** — push + shuffle overhead | 300–500 | ~150–250 | **~$8–13k** | ~$36–58k |
+| **Pessimistic** — pull-based *or* partial random I/O | ~1,000 | ~475 | **~$25k** | ~$115k |
+| Disaster — naive random disk | 10,000+ | thousands | infeasible | infeasible |
+
+Linear in core-years: compute is buyable — more nodes = proportionally less
+wall-clock at the same dollar total. You're renting a fixed amount of work, not
+fighting a wall.
+
+### The calculator
+
+    core-years = positions × branching × passes × ns_per_edge / 3.15576e16
+    dollars    = core-years × 8766 × ($/core-hr)
+
+Sanity check: 5e14 × 16 × 2 × 150 / 3.15576e16 ≈ 76 core-years → ×8766×0.006 ≈
+$4.0k. Dial the four assumptions; everything rides on **ns_per_edge**, which the
+partial-EGTB milestone measures directly for ~$40 — collapsing the 76–475
+core-year range to a single number ±20%. The highest-leverage spend in the
+project.
+
+**W/L/D-first cuts compute too**, not just storage: a 2-bit verdict pass is
+cheaper per edge than carrying/updating DTM, and you skip the DTM-fill pass
+entirely. One lever, both axes.
+
 ## Pricing inputs (2026)
 
 **Compute, $/vCPU-hr:**
