@@ -90,6 +90,34 @@ position-by-position against clausecker/dobutsu.
 
 ---
 
+## Calibration ladder (first solved values + measured ns/edge)
+
+In-RAM retrograde solve of reduced-piece sub-games (real 4×5 board/engine, fewer piece
+types) — `solver/`, `cargo run --release --bin solve`. Validated by a full-table
+**consistency audit** (every value = minimax of its children ⇒ a distance-consistent
+labeling, provably correct given correct base cases). [measured]
+
+| Rung | pieces/side | canonical reachable | start value | max DTM | avg branching | ns/edge | audit |
+|---|---|---|---|---|---|---|---|
+| KP | K, P | 457,993 | **draw** | 29 | 6.86 | **167** | PASS |
+| KPG | +Gold | _(running)_ | | | | | |
+| KPGS | +Silver | _(pending)_ | | | | | |
+
+- **ns/edge ≈ 167 confirms the cost model's ~150 ns RAM-speed floor** — the key
+  calibration result. [measured]
+- First solved fact: **King+Pawn Micro Shogi is a draw** (insufficient mating material),
+  max DTM 29. (Even here, 135,804 positions are wins — king-trapping / knight forks.)
+- Branching is **rung-dependent**: KP is sparse (6.86); the full game runs higher (perft
+  early-game 9→12.5 and climbing; mid-game with hands ≥16). The full-game branching is the
+  cost-model input, not KP's.
+
+> Validation note: an independent *forward-minimax* cross-check proved intractable at this
+> scale — the game is drawish + cyclic, so forward search is exponential and deep (it
+> overflowed the stack). The rigorous validation is the **consistency audit** (a
+> distance-consistent minimax fixpoint is correct), plus perft symmetry and hand-verified
+> mate tests; a **code-implementation diff** (Fairy-Stockfish / hachu) remains the
+> pre-publication independent check (`open-questions.md`).
+
 ## Sizing the complete Micro Shogi tablebase
 
 From canonical ≈ 5×10¹⁴ (see `repro/upper_bound.txt`):
