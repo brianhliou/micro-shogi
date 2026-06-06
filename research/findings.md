@@ -100,8 +100,22 @@ labeling, provably correct given correct base cases). [measured]
 | Rung | pieces/side | canonical reachable | start value | max DTM | avg branching | ns/edge | audit |
 |---|---|---|---|---|---|---|---|
 | KP | K, P | 457,993 | **draw** | 29 | 6.86 | **167** | PASS |
-| KPG | +Gold | _(running)_ | | | | | |
-| KPGS | +Silver | _(pending)_ | | | | | |
+| KPG | +Gold | ~130M (est) | deferred¹ | — | — | — | — |
+| KPGS | +Silver | ~2.5×10¹⁰ (est) | infeasible in-RAM² | — | — | — | — |
+
+¹ KPG (~130M positions) sits past the **practical in-RAM single-thread ceiling**. The push
+solve runs (no pull pathology) but is ~1 hr, and *every* linear pass — enumerate, count, fill,
+and the validation re-scan — is ~15–20 min on a cache-missing 130M-entry hash table. A first
+attempt also got its value trapped behind the post-solve audit (piped stdout block-buffers, so
+nothing flushed before the audit was killed). The driver is now fixed (print + flush before the
+gated validation), so KPG's value is re-runnable in ~1 hr; deferred as a marginal fact.
+
+² KPGS (~2.5×10¹⁰ ≈ 240× KPG) needs ~2 TB → far over 36 GB.
+
+**The ceiling, located:** in-RAM single-thread tops out at **~10⁸ positions** — not from memory
+but because each linear pass costs ~15–20 min and a solve needs several. Past ~10⁷–10⁸ the
+streaming/parallel architecture is required for *time*, not just storage. The full game (5×10¹⁴)
+is ~10⁶× beyond this.
 
 - **ns/edge ≈ 167 confirms the cost model's ~150 ns RAM-speed floor** — the key
   calibration result. [measured]

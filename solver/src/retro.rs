@@ -19,9 +19,10 @@ pub struct Solved {
     pub keys: Vec<u128>,
     pub index: HashMap<u128, u32>,
     pub values: Vec<i32>,
-    pub edges: u64,        // total edge-operations performed during the fixpoint
-    pub rounds: u32,       // fixpoint rounds to convergence
-    pub fixpoint_ns: u128, // wall-clock of the fixpoint loop (for ns/edge)
+    pub edges: u64,         // total edge-operations performed during the fixpoint
+    pub rounds: u32,        // fixpoint rounds to convergence
+    pub fixpoint_ns: u128,  // wall-clock of the fixpoint loop (for ns/edge)
+    pub total_moves: u64,   // Σ legal moves over all positions (for avg branching)
 }
 
 /// Start position for a named rung of the calibration ladder (reduced piece set,
@@ -72,10 +73,12 @@ pub fn solve(start: &Position) -> Solved {
     let n = keys.len();
     let mut values = vec![0i32; n]; // 0 = unknown (and, after convergence, draw)
     let mut unknown: Vec<u32> = Vec::new();
+    let mut total_moves = 0u64;
 
     for id in 0..n {
         let p = unpack(keys[id]);
         let ms = p.moves();
+        total_moves += ms.len() as u64;
         if ms.iter().any(|m| p.is_terminal_win_move(m)) {
             values[id] = 1; // win in 1 (capture the king)
         } else if ms.is_empty() {
@@ -135,6 +138,7 @@ pub fn solve(start: &Position) -> Solved {
         edges,
         rounds,
         fixpoint_ns,
+        total_moves,
     }
 }
 
@@ -155,11 +159,13 @@ pub fn solve_push(start: &Position) -> Solved {
     let mut indeg = vec![0u32; n];
     let mut resolved_no_children = vec![false; n]; // terminal-win or no-move
     let mut queue: VecDeque<u32> = VecDeque::new();
+    let mut total_moves = 0u64;
 
     // pass 1: classify, count children, accumulate in-degrees
     for id in 0..n {
         let p = unpack(keys[id]);
         let ms = p.moves();
+        total_moves += ms.len() as u64;
         if ms.iter().any(|m| p.is_terminal_win_move(m)) {
             value[id] = 1; // win in 1 (capture the king)
             resolved_no_children[id] = true;
@@ -241,6 +247,7 @@ pub fn solve_push(start: &Position) -> Solved {
         edges,
         rounds: 0, // not applicable to the push method
         fixpoint_ns,
+        total_moves,
     }
 }
 
