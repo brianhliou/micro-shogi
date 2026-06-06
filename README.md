@@ -66,6 +66,7 @@ The cheap, high-leverage milestones come before any cluster spend:
 
 ```
 research/
+  session-2026-06-05.md — full session record: all data, Q&A, open questions, next steps
   rules.md           — the exact ruleset the solver is built against (milestone #1)
   findings.md        — verified facts ledger (numbers + sources)
   open-questions.md  — the backlog (ruleset, exact reachable count, calibration)
