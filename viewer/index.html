@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Micro Shogi Rules Viewer</title>
+  <meta name="description" content="A standalone legal-move viewer for Micro Shogi, the 4x5 capture-flip drop-shogi variant.">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="site-header">
+      <h1>Micro Shogi</h1>
+      <span class="tagline">A 4x5 capture-flip drop-shogi, played move by move.</span>
+      <nav class="hlinks" aria-label="Viewer navigation">
+        <button class="navbtn" id="rules" type="button">How it works</button>
+        <button class="navbtn" id="flip" type="button">Flip board</button>
+        <a href="https://github.com/brianhliou/micro-shogi">GitHub</a>
+        <a href="https://brianhliou.com/">Brian Liou</a>
+      </nav>
+    </header>
+
+    <main class="layout">
+      <section class="board-column" aria-label="Micro Shogi board">
+        <div id="topHand" class="hand">
+          <div class="hand-label"></div>
+          <div class="hand-pieces"></div>
+        </div>
+
+        <div class="board-wrap">
+          <div id="board" class="board" aria-label="Board"></div>
+        </div>
+
+        <div id="bottomHand" class="hand">
+          <div class="hand-label"></div>
+          <div class="hand-pieces"></div>
+        </div>
+      </section>
+
+      <aside class="side-panel">
+        <section class="status">
+          <div id="statusTitle" class="status-title"></div>
+          <div id="statusSubtitle" class="status-subtitle"></div>
+        </section>
+
+        <section id="faceRow" class="face-row" hidden>
+          <span class="face-label">Drop face</span>
+          <button id="faceBase" class="face-button" type="button"></button>
+          <button id="facePromo" class="face-button" type="button"></button>
+        </section>
+
+        <section class="controls">
+          <button id="reset" class="icon-button" type="button" title="Reset" aria-label="Reset">↺</button>
+          <button id="undo" class="icon-button" type="button" title="Back" aria-label="Back">‹</button>
+          <button id="redo" class="icon-button" type="button" title="Forward" aria-label="Forward">›</button>
+          <span class="spacer"></span>
+        </section>
+
+        <section>
+          <div class="section-title">Moves played</div>
+          <div id="history" class="history"></div>
+        </section>
+
+        <section class="move-list" aria-label="Legal moves">
+          <div id="moves"></div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <div id="rulesModal" class="modal" hidden>
+    <article class="modal-card">
+      <div class="modal-head">
+        <h2>Micro Shogi</h2>
+        <button id="closeModal" class="icon-button modal-close" type="button" title="Close" aria-label="Close">×</button>
+      </div>
+
+      <p>Micro Shogi is played on a 4x5 board with five pieces per side: King, Gold, Silver, Bishop, and Pawn.</p>
+
+      <h3>Pieces</h3>
+      <ul>
+        <li><strong>K</strong> King: one square in any direction.</li>
+        <li><strong>G</strong> Gold: orthogonal plus forward diagonals. Promoted face <strong>R</strong> moves as a rook.</li>
+        <li><strong>S</strong> Silver: forward plus diagonals. Promoted face <strong>L</strong> moves as a lance.</li>
+        <li><strong>B</strong> Bishop: diagonal slider. Promoted face <strong>T</strong> moves as a gold.</li>
+        <li><strong>P</strong> Pawn: one square forward. Promoted face <strong>N</strong> moves as a shogi knight.</li>
+      </ul>
+
+      <h3>Capture flip</h3>
+      <p>There is no promotion zone. A non-king piece flips to its opposite face whenever it captures, and flips back on its next capture.</p>
+
+      <h3>Drops</h3>
+      <p>Captured non-king pieces enter the capturer's hand. A hand piece can be dropped on any empty square with either face up. There is no nifu, pawn-drop mate ban, or last-rank ban.</p>
+
+      <h3>Terminal rule</h3>
+      <p>The research solver models checkmate by king capture. A move that captures the opposing king ends the game in this viewer.</p>
+
+      <p class="credit">Piece art: kanji_light by Ka-hu, via Lishogi, licensed under CC BY 4.0.</p>
+    </article>
+  </div>
+
+  <script src="./rules.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

@@ -18,16 +18,18 @@ hard**, in positions, dollars, and engineering.
 | all-arrangements upper bound | 1,567,925,964 | **3,915,109,365,634,620** (≈3.92×10¹⁵) |
 | reachable positions | 246,803,167 | **~3–6×10¹⁴** (bracket) |
 | canonical (symmetry-folded) | 213,993,386 | **~5×10¹⁴** |
-| complete tablebase on disk | 333 MB | **~134 TB** (W/L/D) – **~1 PB** (with DTM) |
-| solve compute | 75 min, 1 core, 7 GB RAM | **~150 core-years**, ~100 PB shuffle |
-| solve hardware | a laptop | **~16–20 NVMe nodes, ~1–2 months** |
-| est. cost to solve | ~$0 | **~$10–15k bare-metal** / ~$40–50k cloud |
+| working W/L/D table | 333 MB | **~1 PB** (arrangement-rank basis; reachable floor ~134 TB) |
+| solve compute | 75 min, 1 core, 7 GB RAM | **~660–1,200 core-years**, arrangement basis |
+| solve hardware | a laptop | **tens of NVMe nodes, ~1–2 months** |
+| est. cost to solve | ~$0 | **~$40–70k bare-metal** / ~$150–280k cloud |
 
 The micro-shogi upper bound is **exact** — computed by a combinatorial enumerator that
 reproduces Tanaka's published Dōbutsu figure (1,567,925,964) and its full by-pieces-in-hand
 breakdown to the digit. See [`research/repro/`](research/repro/). The reachable count is
 bracketed from that upper bound using ratios calibrated on Dōbutsu (0.157) and Minishogi
-(0.077); a direct reachable-enumerator is an open task.
+(0.077); a direct reachable-enumerator is an open task. The full solver should be sized to the
+arrangement-rank domain, not the reachable estimate, because a scalable dense rank spans legal
+and unreachable slots.
 
 ## Why it's interesting
 
@@ -45,21 +47,19 @@ bracketed from that upper bound using ratios calibrated on Dōbutsu (0.157) and 
 
 ## Status
 
-**Scoping / research.** No solver yet. The validated state-space enumerator is the only code.
+**Scoping + calibration.** The rules engine, perft harness, push-based retrograde solver, KP
+calibration solve, and browser rules viewer exist. The full external-memory solver does not.
 The cheap, high-leverage milestones come before any cluster spend:
 
-1. **Nail the exact ruleset** — capture-flip promotion, drop restrictions, repetition.
-   *(mostly done — see [`research/rules.md`](research/rules.md); only win-condition + repetition
-   refinement remain, both with working defaults)*
-2. **Rules engine** ✅ + **brute-force validator** — `solver/` (Rust). Engine done and tested:
-   move-gen with sliders, capture-flip promotion, either-face drops, king-capture terminal; 8
-   unit tests + `perft` self-consistency (`research/repro/perft.txt`). Validator (forward minimax
-   on small endgames; no external oracle for Micro Shogi) *next*. *(in progress)*
-3. **Calibration solve** — a smaller sibling game (fewer piece types or a smaller board) run
-   end-to-end in RAM. Proves the pipeline and *calibrates the real per-edge cost*, collapsing the
-   10× compute uncertainty before the go/no-go on the full run. (Drop-shogi has no clean N-piece
-   tablebase — material is conserved — so the partial is a smaller *instance*, not a piece-count
-   slice.) *(open)*
+1. **Nail the exact ruleset** ✅ — capture-flip promotion, drop restrictions, and win condition.
+   *(mostly done — see [`research/rules.md`](research/rules.md); repetition and per-piece
+   primary-source verification remain)*
+2. **Rules engine + viewer** ✅ — `solver/` (Rust) and `viewer/` (static browser app). Engine done
+   and tested: move-gen with sliders, capture-flip promotion, either-face drops,
+   king-capture terminal; unit tests + `perft` self-consistency (`research/repro/perft.txt`).
+3. **Calibration solve** ✅ — KP (King+Pawn) solved in RAM: 457,993 canonical reachable positions,
+   start value draw, max DTM 29, ~167 ns/edge, consistency audit + push-vs-pull cross-check.
+   KPG is re-runnable but deferred as marginal; 4×4 is the recommended de-risk run.
 4. **Full strong solve** on bare-metal — only after 1–3. *(open)*
 
 ## Layout
@@ -76,11 +76,18 @@ research/
   repro/
     statespace_upperbound.py  — the validated enumerator
     upper_bound.txt           — its committed output
+viewer/
+  index.html        — standalone legal-move viewer (open directly in a browser)
+  rules.js          — tested JavaScript port of the Micro Shogi rules
+solver/
+  src/lib.rs        — Rust rules engine
+  src/retro.rs      — pull + push retrograde calibration solvers
 ```
 
 ## Primary sources to establish
 
-- A primary/authoritative source for the **exact Micro Shogi rules** (the gating task).
+- A primary/authoritative source for **per-piece Micro Shogi movement** beyond "standard shogi
+  equivalents."
 - Tanaka 2009 (Dōbutsu) — the methodological anchor, in the sibling repo.
 - Minishogi reachable-count estimate: *Estimating the number of reachable positions in
   Minishogi*, arXiv:2409.00129.
