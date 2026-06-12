@@ -12,6 +12,7 @@ target/
 *.ctb
 *.tb.bin
 *.bin
+*.bin.zst
 
 # OS
 .DS_Store

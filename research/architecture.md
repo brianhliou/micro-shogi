@@ -70,6 +70,13 @@ the fiddly part. Our Dōbutsu solver is **pull-based** specifically to avoid wri
 at 5×10¹⁴ the rescan is unaffordable, so **a correct unmove generator is the gating engineering
 task** for the distributed solve.
 
+The current KPG calibration driver intentionally avoids this primitive by storing the full
+reverse graph in memory after enumerating reachable positions. That is useful scaffolding, not
+the production method: memory becomes `O(edges)`, and the 2026-06-11 KPG run exposed about
+5.54B predecessor edges. The production path should follow Shogi4: dense rank/unrank for flat
+arrays, plus on-demand unmove generation for push propagation. See
+[`solver-methods.md`](solver-methods.md) for the concrete tradeoffs.
+
 ## Incremental progress / checkpointing
 
 - Each shard's value array is durable state on object storage; persist every K supersteps.

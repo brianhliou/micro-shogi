@@ -57,9 +57,12 @@ The cheap, high-leverage milestones come before any cluster spend:
 2. **Rules engine + viewer** ✅ — `solver/` (Rust) and `viewer/` (static browser app). Engine done
    and tested: move-gen with sliders, capture-flip promotion, either-face drops,
    king-capture terminal; unit tests + `perft` self-consistency (`research/repro/perft.txt`).
-3. **Calibration solve** ✅ — KP (King+Pawn) solved in RAM: 457,993 canonical reachable positions,
-   start value draw, max DTM 29, ~167 ns/edge, consistency audit + push-vs-pull cross-check.
-   KPG is re-runnable but deferred as marginal; 4×4 is the recommended de-risk run.
+3. **Calibration solves** ✅ — KP solved in RAM: 457,993 canonical reachable positions,
+   start value draw, max DTM 29, consistency audit + push-vs-pull cross-check. KPG solved on
+   a 64 GB Hetzner box: 869,287,068 canonical reachable positions, start value draw, max DTM
+   155, audit PASS. Run artifacts and method notes live in [`research/runs/`](research/runs/)
+   and [`research/solver-methods.md`](research/solver-methods.md). 4×4 is still the
+   recommended full-pipeline de-risk run.
 4. **Full strong solve** on bare-metal — only after 1–3. *(open)*
 
 ## Layout
@@ -72,7 +75,10 @@ research/
   open-questions.md  — the backlog (ruleset, exact reachable count, calibration)
   cost-model.md      — $ analysis with 2026 cloud/bare-metal pricing
   architecture.md    — distributed strong-solve design (SCC staging, coordinator, hurdles)
+  solver-methods.md  — HashMap/CSR vs dense-rank/unmove tradeoffs
   funding.md         — funding/collaboration strategy + live 2026 programs (verified)
+  runs/
+    README.md        — KPG rerun protocol + analysis checklist
   repro/
     statespace_upperbound.py  — the validated enumerator
     upper_bound.txt           — its committed output

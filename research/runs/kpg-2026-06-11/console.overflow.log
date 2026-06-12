@@ -1,0 +1,32 @@
+    Finished `release` profile [optimized] target(s) in 0.01s
+     Running `solver/target/release/solve KPG --out-dir research/runs/kpg-2026-06-11 --dump-table --audit-large`
+
+=== rung KPG   start S/k-g-/p---/----/---P/-G-K/- ===
+
+thread 'main' (3936) panicked at src/retro.rs:204:20:
+index out of bounds: the len is 1241100710 but the index is 1241100712
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+Command exited with non-zero status 101
+	Command being timed: "cargo run --manifest-path solver/Cargo.toml --release --bin solve KPG --out-dir research/runs/kpg-2026-06-11 --dump-table --audit-large"
+	User time (seconds): 6458.95
+	System time (seconds): 60.34
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:48:48
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 63455276
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 39574
+	Minor (reclaiming a frame) page faults: 27759106
+	Voluntary context switches: 39697
+	Involuntary context switches: 34298
+	Swaps: 0
+	File system inputs: 411424
+	File system outputs: 8
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 101

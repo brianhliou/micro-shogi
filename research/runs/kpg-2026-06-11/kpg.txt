@@ -1,0 +1,13 @@
+=== rung KPG   start S/k-g-/p---/----/---P/-G-K/- ===
+positions (reachable, canonical) : 869287068
+start value                       : 0  (draw)
+W / L / D                         : 606922331 / 142074547 / 120290190
+max DTM                           : 155 plies
+avg branching (reachable)         : 11.792
+total legal moves                 : 10250756260
+propagation edge-ops / ns-per-edge: 4567032875 / 93 ns
+solve wall ns/legal-move          : 1208 ns
+solve wall-clock (push)           : 12385.280s
+BFS propagation wall-clock        : 423.354s
+VALIDATION                        : audit=0 push-vs-pull=skipped -> PASS
+table dump                        : research/runs/kpg-2026-06-11/kpg.table.bin (869287068 records, 17385741380 bytes, 20 bytes/record)

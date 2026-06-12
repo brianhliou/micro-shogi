@@ -146,11 +146,12 @@ directly to the $.**
 
 ## Recommendation
 
-**Hetzner bare-metal, W/L/D-only, stream-and-discard, node-local shuffle. Budget ~$10–15k,
-~2 months, ~16 boxes** for the full run — **but do not commit blind.** The partial-EGTB
-milestone runs on one ~$40 Hetzner auction box (or local hardware), validates correctness, and
-calibrates the real per-edge cost, collapsing the 40–475 core-year range. **The entire pipeline
-can be de-risked for ~$0–50 before the $10k+ decision.**
+**Hetzner bare-metal, W/L/D-only, stream-and-discard, node-local shuffle. Budget the
+arrangement-domain run at ~$40–70k, not the reachable-floor ~$10–15k.** The exact box count and
+duration remain downstream of the dense-rank/unmove partial: KPG calibrated the current
+reachable-HashMap shortcut, but not the production pipeline. Do not commit blind; the
+full-pipeline de-risk run should validate correctness and measure real per-edge cost,
+supersteps, and shuffle locality before the cluster decision.
 
 ## Sources
 

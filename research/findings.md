@@ -100,29 +100,32 @@ labeling, provably correct given correct base cases). [measured]
 | Rung | pieces/side | canonical reachable | start value | max DTM | avg branching | ns/edge | audit |
 |---|---|---|---|---|---|---|---|
 | KP | K, P | 457,993 | **draw** | 29 | 6.86 | **167** | PASS |
-| KPG | +Gold | ~130M (est) | deferred¹ | — | — | — | — |
-| KPGS | +Silver | ~2.5×10¹⁰ (est) | infeasible in-RAM² | — | — | — | — |
+| KPG | +Gold | **869,287,068** | **draw** | 155 | 11.79 | **93**¹ | PASS |
+| KPGS | +Silver | ~2×10¹¹ (re-est.) | infeasible in-RAM² | — | — | — | — |
 
-¹ KPG (~130M positions) sits past the **practical in-RAM single-thread ceiling**. The push
-solve runs (no pull pathology) but is ~1 hr, and *every* linear pass — enumerate, count, fill,
-and the validation re-scan — is ~15–20 min on a cache-missing 130M-entry hash table. A first
-attempt also got its value trapped behind the post-solve audit (piped stdout block-buffers, so
-nothing flushed before the audit was killed). The driver is now fixed (print + flush before the
-gated validation), so KPG's value is re-runnable in ~1 hr; deferred as a marginal fact.
+¹ KPG run: `research/runs/kpg-2026-06-11/kpg.json`, Hetzner 64 GB box, 2026-06-11/12.
+The `93 ns` figure is the final push-propagation phase only; whole-solve wall time was
+1,208 ns/legal move, 12,385 s for the core solve and 4:21:08 wall-clock including table dump
+and audit. W/L/D = 606,922,331 / 142,074,547 / 120,290,190
+(69.82% / 16.34% / 13.84%). The binary table dump is 17,385,741,380 bytes.
 
-² KPGS (~2.5×10¹⁰ ≈ 240× KPG) needs ~2 TB → far over 36 GB.
+² KPG was ~6.7× larger than the earlier ~130M estimate. Carrying the old ~240×
+KPG→KPGS growth factor gives ~2×10¹¹ positions, so KPGS is beyond the current
+reachable-HashMap + stored-CSR driver and needs the Shogi4-style dense-rank /
+unmove-generation path.
 
-**The ceiling, located:** in-RAM single-thread tops out at **~10⁸ positions** — not from memory
-but because each linear pass costs ~15–20 min and a solve needs several. Past ~10⁷–10⁸ the
-streaming/parallel architecture is required for *time*, not just storage. The full game (5×10¹⁴)
-is ~10⁶× beyond this.
+**The ceiling, located:** the current in-RAM shortcut can reach KPG, but only barely: peak RSS
+was ~60.5 GiB and the 64 GB machine used swap. The method stores a reachable-key `HashMap` and
+a full predecessor CSR, so memory is `O(positions + edges)`. Past KPG, the streaming/parallel
+dense-rank architecture is required for memory, time, and checkpointability. The full game
+(5×10¹⁴) is ~10⁶× beyond KPG.
 
 - **ns/edge ≈ 167 confirms the cost model's ~150 ns RAM-speed floor** — the key
   calibration result. [measured]
 - First solved fact: **King+Pawn Micro Shogi is a draw** (insufficient mating material),
   max DTM 29. (Even here, 135,804 positions are wins — king-trapping / knight forks.)
-- Branching is **rung-dependent**: KP is sparse (6.86); the full game runs higher (perft
-  early-game 9→12.5 and climbing; mid-game with hands ≥16). The full-game branching is the
+- Branching is **rung-dependent**: KP is sparse (6.86), KPG is 11.79, and the full game runs
+  higher (perft early-game 9→12.5 and climbing; mid-game with hands ≥16). The full-game branching is the
   cost-model input, not KP's.
 
 > Validation note: an independent *forward-minimax* cross-check proved intractable at this
@@ -134,11 +137,12 @@ is ~10⁶× beyond this.
 > hachu) remains the pre-publication move-gen check (`open-questions.md`).
 
 > **Pull-based Jacobi is non-viable at scale on drop-shogi.** It rescans every undecided
-> position each round; draws are *never* decided, so ~70% of positions are rescanned for
-> ~max-DTM rounds → `O(draws × branching × maxDTM)`. Dōbutsu survived this (1.2% draws);
-> KPG (≈70% draws) ran **>8 h without converging** and was killed. The **push-based**
-> counter-BFS touches each edge once and never revisits a draw — KP: 10.8 s → **1.15 s**
-> (~9×), and the gain grows with max-DTM. The full solve must be push-based (and streaming).
+> position each round; draws are *never* decided, and long forced lines repeat work across
+> many rounds. Dōbutsu survived this (1.2% draws); KPG's successful push solve found only
+> 13.84% draws, but max DTM 155 and 10.25B legal moves still made the earlier pull attempt run
+> **>8 h without converging** before it was killed. The **push-based** counter-BFS touches
+> each resolved-child edge once and never revisits a draw — KP: 10.8 s → **1.15 s** (~9×),
+> and the gain grows with scale. The full solve must be push-based (and streaming).
 
 ## Sizing the complete Micro Shogi tablebase
 

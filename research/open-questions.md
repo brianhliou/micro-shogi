@@ -28,17 +28,18 @@ was erroneous). Residual items, none of which block the build:
 - [ ] **Exact reachable count** (replaces the 0.077–0.157 bracket → a single number). Requires
   a correct rules engine + a canonical-key + a BFS/enumerator. Folds turn+LR symmetry. This
   also produces the exact target count that the solve must reproduce (completeness check).
-- [ ] **Per-edge cost and fixpoint pass-count calibration.** The compute estimate carries ~10×
-  uncertainty (40–475 core-years). The partial-EGTB milestone measures real ns/edge and the
-  number of passes on actual hardware, collapsing the range before the cluster go/no-go.
+- [~] **Per-edge cost and fixpoint pass-count calibration.** KPG measured the current
+  reachable-HashMap + stored-CSR driver at 1,208 ns/legal move end-to-end and 93 ns/resolved
+  propagation edge, but it is not the production dense-rank/unmove pipeline. A 4×4 or
+  Micro-specific dense-rank partial must still measure real ns/edge, supersteps, and shuffle
+  locality before the cluster go/no-go.
 - [~] **Average branching factor.** Measured early-game via `perft` (`repro/perft.txt`):
-  9 → 12.5 by depth 6 and climbing. With unrestricted either-face drops, mid/late-game branching
-  is likely **≥16** (each hand piece → ~empty-squares × 2 faces on a 20-square board), so the
-  cost model's ~16 may be *low* — nudging the ~100 PB shuffle / ~150 core-year figures up. Full
-  reachable-set average pending the solver.
-- [ ] **Max distance-to-mate (depth).** Sets DTM bit-width and the number of fixpoint
-  rounds/supersteps. Dōbutsu was 173; Micro is presumably deeper. Unknown until partially
-  solved.
+  9 → 12.5 by depth 6 and climbing; KPG measured 11.79 over 869,287,068 canonical reachable
+  positions. With unrestricted either-face drops and all five piece types, full-game mid/late-game
+  branching may still be higher. Full reachable-set average pending the solver.
+- [~] **Max distance-to-mate (depth).** Sets DTM bit-width and the number of fixpoint
+  rounds/supersteps. KPG max DTM is 155 plies; Dōbutsu was 173. Full Micro remains unknown until
+  larger partials or the full solve.
 - [ ] **Strength of symmetry folding.** Our Dōbutsu solver captures only ~1.15× over Tanaka's
   reachable, vs a theoretical ~4× (turn×LR). How much is actually achievable for Micro, and
   what does it save in storage/compute?

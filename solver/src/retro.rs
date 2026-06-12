@@ -19,10 +19,10 @@ pub struct Solved {
     pub keys: Vec<u128>,
     pub index: HashMap<u128, u32>,
     pub values: Vec<i32>,
-    pub edges: u64,         // total edge-operations performed during the fixpoint
-    pub rounds: u32,        // fixpoint rounds to convergence
-    pub fixpoint_ns: u128,  // wall-clock of the fixpoint loop (for ns/edge)
-    pub total_moves: u64,   // Σ legal moves over all positions (for avg branching)
+    pub edges: u64,        // total edge-operations performed during the fixpoint
+    pub rounds: u32,       // fixpoint rounds to convergence
+    pub fixpoint_ns: u128, // wall-clock of the fixpoint loop (for ns/edge)
+    pub total_moves: u64,  // Σ legal moves over all positions (for avg branching)
 }
 
 /// Start position for a named rung of the calibration ladder (reduced piece set,
@@ -65,6 +65,25 @@ pub fn enumerate(start: &Position) -> (Vec<u128>, HashMap<u128, u32>) {
         }
     }
     (keys, index)
+}
+
+fn index_from_keys(keys: &[u128]) -> HashMap<u128, u32> {
+    let mut index = HashMap::with_capacity(keys.len());
+    for (id, &key) in keys.iter().enumerate() {
+        let id = u32::try_from(id).expect("position count exceeds u32::MAX");
+        index.insert(key, id);
+    }
+    index
+}
+
+fn predecessor_offsets(indeg: &[u32]) -> Vec<usize> {
+    let mut offsets = vec![0usize; indeg.len() + 1];
+    for (i, &count) in indeg.iter().enumerate() {
+        offsets[i + 1] = offsets[i]
+            .checked_add(count as usize)
+            .expect("too many predecessor edges for this platform");
+    }
+    offsets
 }
 
 /// Retrograde solve: enumerate, then a Jacobi fixpoint to distance-to-mate.
@@ -155,9 +174,8 @@ pub fn solve_push(start: &Position) -> Solved {
     let (keys, index) = enumerate(start);
     let n = keys.len();
     let mut value = vec![0i32; n]; // 0 = unknown/draw
-    let mut nchild = vec![0u32; n];
+    let mut nchild = vec![0u16; n];
     let mut indeg = vec![0u32; n];
-    let mut resolved_no_children = vec![false; n]; // terminal-win or no-move
     let mut queue: VecDeque<u32> = VecDeque::new();
     let mut total_moves = 0u64;
 
@@ -168,13 +186,11 @@ pub fn solve_push(start: &Position) -> Solved {
         total_moves += ms.len() as u64;
         if ms.iter().any(|m| p.is_terminal_win_move(m)) {
             value[id] = 1; // win in 1 (capture the king)
-            resolved_no_children[id] = true;
             queue.push_back(id as u32);
             continue;
         }
         if ms.is_empty() {
             value[id] = -2; // no legal move = loss
-            resolved_no_children[id] = true;
             queue.push_back(id as u32);
             continue;
         }
@@ -182,29 +198,32 @@ pub fn solve_push(start: &Position) -> Solved {
             let cid = *index.get(&canonical_key(&p.make(m))).unwrap();
             indeg[cid as usize] += 1;
         }
-        nchild[id] = ms.len() as u32;
+        nchild[id] = u16::try_from(ms.len()).expect("position has more than u16::MAX legal moves");
     }
 
     // CSR for predecessors (transpose of forward edges)
-    let mut par_off = vec![0u32; n + 1];
-    for i in 0..n {
-        par_off[i + 1] = par_off[i] + indeg[i];
-    }
-    let total_edges = par_off[n] as usize;
+    let par_off = predecessor_offsets(&indeg);
+    let total_edges = par_off[n];
     let mut par_idx = vec![0u32; total_edges];
-    let mut fill: Vec<u32> = par_off[..n].to_vec();
+    let mut fill = vec![0u32; n];
     // pass 2: fill predecessor lists
     for id in 0..n {
-        if resolved_no_children[id] {
+        if value[id] != 0 {
             continue;
         }
         let p = unpack(keys[id]);
         for m in &p.moves() {
             let cid = *index.get(&canonical_key(&p.make(m))).unwrap() as usize;
-            par_idx[fill[cid] as usize] = id as u32;
+            let offset = fill[cid] as usize;
+            assert!(
+                offset < indeg[cid] as usize,
+                "predecessor fill exceeded counted indegree for child id {cid}"
+            );
+            par_idx[par_off[cid] + offset] = id as u32;
             fill[cid] += 1;
         }
     }
+    drop(index);
     drop(fill);
     drop(indeg);
 
@@ -239,6 +258,10 @@ pub fn solve_push(start: &Position) -> Solved {
         }
     }
     let fixpoint_ns = t.elapsed().as_nanos();
+    drop(cnt);
+    drop(par_idx);
+    drop(par_off);
+    let index = index_from_keys(&keys);
 
     Solved {
         keys,
@@ -393,6 +416,21 @@ mod tests {
         let s = solve(&start);
         assert!(s.keys.len() > 1);
         assert_eq!(audit(&s), 0, "consistency audit must pass");
+    }
+
+    #[test]
+    fn kp_push_matches_pull_and_audits() {
+        let start = rung_start("KP").unwrap();
+        let push = solve_push(&start);
+        let pull = solve(&start);
+        assert_eq!(cross_check(&push, &pull), 0, "push must match pull");
+        assert_eq!(audit(&push), 0, "push consistency audit must pass");
+    }
+
+    #[test]
+    fn predecessor_offsets_do_not_wrap_at_u32() {
+        let offsets = predecessor_offsets(&[u32::MAX, 3]);
+        assert_eq!(offsets, vec![0, u32::MAX as usize, u32::MAX as usize + 3]);
     }
 
     #[test]
