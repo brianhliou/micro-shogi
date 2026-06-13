@@ -155,6 +155,54 @@ cargo run --manifest-path solver/Cargo.toml --release --bin solve KPGS
 That guard exists because KPGS is expected to be around 240x KPG and TB-scale in
 RAM. `--allow-huge` is only an emergency override, not part of the current plan.
 
+## Dense-rank KPG comparison
+
+The `dense-rank-kpg` branch adds a KPG-specific dense-rank + on-demand
+predecessor solver:
+
+```sh
+solver/target/release/solve_dense_kpg --out-dir research/runs/dense-kpg-2026-06-12
+```
+
+The first dense run completed in 3:31:48 and exposed a mirror-duplication issue:
+8,158,994,437 canonical predecessor ids survived and the same number were
+discarded as duplicates. The mirror-aware rerun is the benchmark to cite.
+
+Mirror-aware command:
+
+```sh
+solver/target/release/solve_dense_kpg --out-dir research/runs/dense-kpg-mirror-2026-06-12
+```
+
+Completed mirror-aware result, same Hetzner host:
+
+```text
+positions_reachable_canonical = 869287068
+raw_rank_domain = 2037557340
+rank_domain / reachable = 2.34394
+start_value = 0
+verdict = draw
+wins / losses / draws = 606922331 / 142074547 / 120290190
+max_dtm = 155
+total_legal_moves = 10250756260
+avg_branching = 11.792142
+total_wall = 2:21:04
+max_rss = 7198128 KB (~6.86 GiB)
+duplicate_predecessor_ids = 0
+```
+
+Compared with the stored-CSR KPG run:
+
+```text
+dense_vs_csr_full_run_speedup = 1.85x
+dense_vs_csr_core_solve_speedup = 1.46x
+rss_reduction = 8.82x
+```
+
+The dense result exactly matches the audited CSR result. Audit was skipped in the
+dense run; the validation evidence is parity with the audited run plus the dense
+rank/unrank and predecessor-generation tests.
+
 ## Analysis checklist
 
 KPG is complete. When drafting public prose from `kpg.json`:

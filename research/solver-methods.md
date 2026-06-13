@@ -134,6 +134,18 @@ normal forward `make()` path and checking that the canonical child is the target
 That is slower, but it keeps correctness tied to the already-tested forward
 engine.
 
+The KPG dense-rank comparison run on 2026-06-12/13 confirms the memory tradeoff
+in practice. The raw rank domain is 2,037,557,340 slots, 2.34x the 869,287,068
+reachable positions, but the dense solver reproduced the audited CSR result with
+~6.86 GiB peak RSS instead of ~60.55 GiB. After mirror-aware predecessor
+generation, single-thread wall time was 8,464.0 s, 1.46x faster than the
+stored-CSR core solve and 1.85x faster than the CSR article run's full wall time.
+
+The first dense KPG run found the mirror bug plainly: it generated 16.3B
+predecessor candidates, kept 8.16B canonical predecessor ids, and discarded
+another 8.16B duplicate ids. The mirror-aware rerun generated 8.16B candidates,
+kept 8.16B ids, and discarded none.
+
 ## Can Micro Shogi switch to the Shogi4 method?
 
 Yes. It is the right direction for the full solve and probably for any serious

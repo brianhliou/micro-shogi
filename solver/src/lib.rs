@@ -18,6 +18,7 @@
 //! Terminal = King capture (we use pseudo-legal move generation + king-capture as
 //! the win, like the Dōbutsu solver; equivalent to checkmate under optimal play).
 
+pub mod dense_kpg;
 pub mod retro;
 
 pub const NFILE: i8 = 4;

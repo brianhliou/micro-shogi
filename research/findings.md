@@ -109,6 +109,15 @@ The `93 ns` figure is the final push-propagation phase only; whole-solve wall ti
 and audit. W/L/D = 606,922,331 / 142,074,547 / 120,290,190
 (69.82% / 16.34% / 13.84%). The binary table dump is 17,385,741,380 bytes.
 
+Dense-rank KPG comparison:
+`research/runs/dense-kpg-mirror-2026-06-12/dense-kpg.json`. The dense rank
+domain is 2,037,557,340 slots, or 2.34x the reachable count. The solver
+reproduced the audited CSR result exactly while using 7,198,128 KB peak RSS
+(~6.86 GiB), an 8.82x memory reduction versus CSR. Mirror-aware predecessor
+generation removed the first dense run's duplicate half of predecessor ids and
+cut wall time to 8,464.0 s: 1.46x faster than the CSR core solve and 1.85x
+faster than the CSR end-to-end article run with table dump and `--audit-large`.
+
 ² KPG was ~6.7× larger than the earlier ~130M estimate. Carrying the old ~240×
 KPG→KPGS growth factor gives ~2×10¹¹ positions, so KPGS is beyond the current
 reachable-HashMap + stored-CSR driver and needs the Shogi4-style dense-rank /
@@ -116,9 +125,9 @@ unmove-generation path.
 
 **The ceiling, located:** the current in-RAM shortcut can reach KPG, but only barely: peak RSS
 was ~60.5 GiB and the 64 GB machine used swap. The method stores a reachable-key `HashMap` and
-a full predecessor CSR, so memory is `O(positions + edges)`. Past KPG, the streaming/parallel
-dense-rank architecture is required for memory, time, and checkpointability. The full game
-(5×10¹⁴) is ~10⁶× beyond KPG.
+a full predecessor CSR, so memory is `O(positions + edges)`. A KPG-specific dense-rank +
+on-demand-predecessor solver cuts peak RSS to ~6.86 GiB, confirming the Shogi4 method boundary:
+dense rank is not optional past KPG. The full game (5×10¹⁴) is ~10⁶× beyond KPG.
 
 - **ns/edge ≈ 167 confirms the cost model's ~150 ns RAM-speed floor** — the key
   calibration result. [measured]
