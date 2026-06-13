@@ -39,6 +39,7 @@
   let flipped = false;
   let dragState = null;
   let dragGhost = null;
+  let hoverMove = null;
 
   function pos() {
     return history[cursor];
@@ -120,6 +121,7 @@
     played.push({ move, label });
     cursor += 1;
     selected = null;
+    hoverMove = null;
     render();
   }
 
@@ -161,6 +163,63 @@
     const set = new Set([move.to]);
     if (move.from !== null && move.from !== undefined) set.add(move.from);
     return set;
+  }
+
+  function clearHoverMove() {
+    hoverMove = null;
+    renderMovePreview();
+  }
+
+  function setHoverMove(move) {
+    hoverMove = move || null;
+    renderMovePreview();
+  }
+
+  function displayPoint(sq) {
+    const idx = displaySquares().indexOf(sq);
+    if (idx < 0) return null;
+    return {
+      x: (idx % rules.NFILE + 0.5) * 100,
+      y: (Math.floor(idx / rules.NFILE) + 0.5) * 100,
+    };
+  }
+
+  function arrowPath(from, to) {
+    const start = displayPoint(from);
+    const end = displayPoint(to);
+    if (!start || !end) return "";
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const len = Math.hypot(dx, dy);
+    if (len < 1) return "";
+    const trimStart = 24;
+    const trimEnd = 35;
+    const sx = start.x + (dx / len) * trimStart;
+    const sy = start.y + (dy / len) * trimStart;
+    const ex = end.x - (dx / len) * trimEnd;
+    const ey = end.y - (dy / len) * trimEnd;
+    return `<line class="move-preview-line" x1="${sx.toFixed(2)}" y1="${sy.toFixed(2)}" x2="${ex.toFixed(2)}" y2="${ey.toFixed(2)}" marker-end="url(#move-preview-head)"/>`;
+  }
+
+  function renderMovePreview() {
+    boardEl.querySelector(".move-preview")?.remove();
+    if (!hoverMove) return;
+    const to = displayPoint(hoverMove.to);
+    if (!to) return;
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "move-preview");
+    svg.setAttribute("viewBox", `0 0 ${rules.NFILE * 100} ${rules.NRANK * 100}`);
+    svg.setAttribute("aria-hidden", "true");
+    svg.innerHTML = [
+      "<defs>",
+      '<marker id="move-preview-head" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">',
+      '<path d="M0,0 L12,6 L0,12 Z" fill="currentColor"/>',
+      "</marker>",
+      "</defs>",
+      hoverMove.type === "move" ? arrowPath(hoverMove.from, hoverMove.to) : "",
+      hoverMove.type === "drop" ? `<circle class="move-preview-drop" cx="${to.x}" cy="${to.y}" r="28"/>` : "",
+    ].join("");
+    boardEl.append(svg);
   }
 
   function paintBoardHints() {
@@ -242,10 +301,13 @@
       }
       cell.addEventListener("click", () => onCellClick(sq));
       cell.addEventListener("keydown", (event) => onCellKeyDown(event, sq));
+      cell.addEventListener("pointerenter", () => onCellPointerEnter(sq));
+      cell.addEventListener("pointerleave", () => onCellPointerLeave(sq));
       cell.addEventListener("dragover", (event) => onCellDragOver(event, sq));
       cell.addEventListener("drop", (event) => onCellDrop(event, sq));
       boardEl.append(cell);
     }
+    renderMovePreview();
   }
 
   function onCellClick(sq) {
@@ -256,6 +318,7 @@
       play(target);
       return;
     }
+    hoverMove = null;
     const cell = current.board[sq];
     if (cell && cell.owner === current.turn) {
       selected = { type: "square", sq };
@@ -269,6 +332,15 @@
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
     onCellClick(sq);
+  }
+
+  function onCellPointerEnter(sq) {
+    const target = selectedMoves().find((move) => move.to === sq);
+    if (target) setHoverMove(target);
+  }
+
+  function onCellPointerLeave(sq) {
+    if (hoverMove?.to === sq) clearHoverMove();
   }
 
   function onCellDragOver(event, sq) {
@@ -288,6 +360,7 @@
 
   function onCellDragStart(event, sq, piece) {
     if (!event.dataTransfer) return;
+    hoverMove = null;
     selected = { type: "square", sq };
     dragState = { type: "move", from: sq };
     event.dataTransfer.effectAllowed = "move";
@@ -333,6 +406,7 @@
       chip.disabled = count <= 0 || !active;
       chip.draggable = count > 0 && active;
       chip.addEventListener("click", () => {
+        hoverMove = null;
         selected = { type: "hand", kind };
         render();
       });
@@ -342,6 +416,7 @@
           return;
         }
         const promo = dropPromo;
+        hoverMove = null;
         selected = { type: "hand", kind };
         dragState = { type: "drop", kind, promo };
         event.dataTransfer.effectAllowed = "move";
@@ -450,6 +525,10 @@
         row.append(tags);
 
         row.addEventListener("click", () => play(move));
+        row.addEventListener("pointerenter", () => setHoverMove(move));
+        row.addEventListener("pointerleave", () => {
+          if (hoverMove === move) clearHoverMove();
+        });
         movesEl.append(row);
       }
     }
@@ -472,6 +551,7 @@
       button.addEventListener("click", () => {
         cursor = index + 1;
         selected = null;
+        hoverMove = null;
         render();
       });
       historyEl.append(button);
@@ -498,6 +578,7 @@
     played = [];
     cursor = 0;
     selected = null;
+    hoverMove = null;
     render();
   });
 
@@ -505,6 +586,7 @@
     if (cursor > 0) {
       cursor -= 1;
       selected = null;
+      hoverMove = null;
       render();
     }
   });
@@ -513,12 +595,14 @@
     if (cursor < history.length - 1) {
       cursor += 1;
       selected = null;
+      hoverMove = null;
       render();
     }
   });
 
   flipEl.addEventListener("click", () => {
     flipped = !flipped;
+    hoverMove = null;
     render();
   });
 
@@ -548,6 +632,7 @@
     if (!selected || !(event.target instanceof Element)) return;
     if (event.target.closest("#board, .hand, #faceRow")) return;
     selected = null;
+    hoverMove = null;
     render();
   }, true);
 
@@ -557,6 +642,7 @@
     dragState = null;
     if (wasDragging && (selected?.type === "hand" || selected?.type === "square")) {
       selected = null;
+      hoverMove = null;
       render();
     }
   });
@@ -565,16 +651,19 @@
     if (event.key === "Escape") {
       modalEl.hidden = true;
       selected = null;
+      hoverMove = null;
       render();
     }
     if (event.key === "ArrowLeft" && cursor > 0) {
       cursor -= 1;
       selected = null;
+      hoverMove = null;
       render();
     }
     if (event.key === "ArrowRight" && cursor < history.length - 1) {
       cursor += 1;
       selected = null;
+      hoverMove = null;
       render();
     }
   });

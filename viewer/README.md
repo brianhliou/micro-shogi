@@ -12,6 +12,7 @@ What it covers:
 - Unrestricted either-face drops.
 - King-capture terminal handling.
 - Move history, undo/redo, board rotation, and grouped legal moves.
+- Hover previews for legal moves, including board arrows and drop markers.
 - CSS-rendered board with standard `kanji_light` SVG shogi pieces from Lishogi.
 
 What it does not cover yet:
@@ -25,3 +26,9 @@ Piece art attribution:
 - `kanji_light` shogi pieces by Ka-hu, via Lishogi.
 - License: CC BY 4.0.
 - Source: https://github.com/WandererXII/lishogi/tree/master/ui/@build/pieces/assets/standard/kanji_light
+
+Deployment:
+
+- Deploy this `viewer/` directory as the Vercel project root for the standalone
+  viewer. The included `vercel.json` allows the page to be embedded by
+  `brianhliou.com`.

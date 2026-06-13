@@ -237,6 +237,7 @@ button {
   max-width: 500px;
   min-width: 300px;
   aspect-ratio: 4 / 5;
+  position: relative;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   grid-template-rows: repeat(5, 1fr);
@@ -246,6 +247,35 @@ button {
   border: 2px solid var(--board-line);
   border-radius: 0;
   box-shadow: 0 14px 32px rgba(24, 24, 18, 0.2);
+}
+
+.move-preview {
+  position: absolute;
+  z-index: 5;
+  inset: 4px;
+  color: rgba(141, 79, 31, 0.92);
+  pointer-events: none;
+  overflow: visible;
+}
+
+.move-preview-line {
+  stroke: currentColor;
+  stroke-width: 10;
+  stroke-linecap: round;
+  filter: drop-shadow(0 2px 2px rgba(43, 29, 8, 0.3));
+}
+
+.move-preview-drop {
+  fill: rgba(141, 79, 31, 0.12);
+  stroke: currentColor;
+  stroke-width: 7;
+  filter: drop-shadow(0 2px 2px rgba(43, 29, 8, 0.25));
+}
+
+@media (max-height: 760px) and (min-width: 901px) {
+  .board {
+    width: min(100%, calc((100vh - 224px) * 0.8));
+  }
 }
 
 .cell {
