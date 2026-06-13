@@ -1,99 +1,101 @@
 # micro-shogi
 
-> Research project: scope and (eventually) compute the **complete strong solution** of
-> **Micro Shogi** — the 4×5 drop-shogi variant that sits one rung above Dōbutsu Shōgi on
-> the small-shogi ladder. Treat it like science, not blogging: every number carries its
-> source, estimates are bracketed, and the early wrong guesses are not recorded here.
+Rules engine, tablebase experiments, and run records for **Micro Shogi**, a
+4x5 drop-shogi variant with five pieces per side.
 
-This repo is the sequel to [dobutsu-shogi](../dobutsu-shogi), where we reproduced Tanaka's
-2009 strong solution of Dōbutsu Shōgi from the primary source and built a from-scratch Rust
-tablebase. Dōbutsu is the **largest strongly-solved drop-shogi** to date. Micro Shogi is the
-next candidate that is *feasible but hard* — and the interesting question is exactly **how
-hard**, in positions, dollars, and engineering.
+This repository supports the public writeup:
+[Toward Solving Micro Shogi](https://brianhliou.com/posts/micro-shogi/).
+The full game is not solved. The current result is a measured calibration rung:
+King+Pawn+Gold per side is solved and audited, and it was large enough to test
+the solver architecture that a full solve would need.
 
-## The headline numbers (validated)
+## Current results
 
-| | Dōbutsu (3×4) — *measured* | Micro Shogi (4×5) — *this repo* |
-|---|---|---|
-| all-arrangements upper bound | 1,567,925,964 | **3,915,109,365,634,620** (≈3.92×10¹⁵) |
-| reachable positions | 246,803,167 | **~3–6×10¹⁴** (bracket) |
-| canonical (symmetry-folded) | 213,993,386 | **~5×10¹⁴** |
-| working W/L/D table | 333 MB | **~1 PB** (arrangement-rank basis; reachable floor ~134 TB) |
-| solve compute | 75 min, 1 core, 7 GB RAM | **~660–1,200 core-years**, arrangement basis |
-| solve hardware | a laptop | **tens of NVMe nodes, ~1–2 months** |
-| est. cost to solve | ~$0 | **~$40–70k bare-metal** / ~$150–280k cloud |
+| Result | Value |
+|---|---:|
+| Micro Shogi all-arrangements upper bound | 3,915,109,365,634,620 |
+| Full-game reachable positions | ~3.0e14 to ~6.2e14, estimated |
+| Full-game dense-rank working table | ~1 PB for W/L/D values |
+| KP reduced game | draw, 457,993 canonical reachable positions |
+| KPG reduced game | draw, 869,287,068 canonical reachable positions |
+| KPG max DTM | 155 plies |
 
-The micro-shogi upper bound is **exact** — computed by a combinatorial enumerator that
-reproduces Tanaka's published Dōbutsu figure (1,567,925,964) and its full by-pieces-in-hand
-breakdown to the digit. See [`research/repro/`](research/repro/). The reachable count is
-bracketed from that upper bound using ratios calibrated on Dōbutsu (0.157) and Minishogi
-(0.077); a direct reachable-enumerator is an open task. The full solver should be sized to the
-arrangement-rank domain, not the reachable estimate, because a scalable dense rank spans legal
-and unreachable slots.
+The all-arrangements count is exact. The reachable count is still an estimate,
+bracketed from Dōbutsu Shōgi and Minishogi ratios.
 
-## Why it's interesting
+The KPG run produced two useful engineering measurements:
 
-- **It's the frontier.** Dōbutsu (2.5×10⁸) is solved; Minishogi 5×5 (~2.4×10¹⁸) is firmly
-  unsolved (only *estimated*, never enumerated). Micro Shogi (~5×10¹⁴) sits in between — the
-  next rung that retrograde analysis can plausibly reach, but only as a real distributed,
-  external-memory computation.
-- **Drops break the chess-tablebase recipe.** In chess, captures strictly reduce material,
-  so endgame tablebases solve a clean DAG of material buckets bottom-up. Shogi drops let
-  pieces re-enter play, cycling the material graph — so the standard recipe doesn't apply
-  unmodified. Dōbutsu hid this (it fit in RAM, solved whole); Micro Shogi forces the issue.
-- **The cost is a design variable, not a constant.** What you store per position (2 bits vs
-  16), bare-metal vs cloud, and persist-all vs stream-and-discard swing the budget ~8×, ~5×,
-  and ~10× respectively. The analysis is in [`research/cost-model.md`](research/cost-model.md).
+| Method | Peak memory | Time | Notes |
+|---|---:|---:|---|
+| Reachable ids + stored CSR | ~60.5 GiB | 4:21:08 full run | Audited |
+| Dense rank + generated predecessors | ~6.86 GiB | 2:21:04 total | Matched audited values |
 
-## Status
+The dense-rank result is the main architectural lesson. A small solver can index
+only reachable positions and store every reverse edge. A scalable solver needs a
+mathematical rank over an arrangement domain, flat arrays, and predecessor
+generation on demand.
 
-**Scoping + calibration.** The rules engine, perft harness, push-based retrograde solver, KP
-calibration solve, and browser rules viewer exist. The full external-memory solver does not.
-The cheap, high-leverage milestones come before any cluster spend:
+## Where this fits
 
-1. **Nail the exact ruleset** ✅ — capture-flip promotion, drop restrictions, and win condition.
-   *(mostly done — see [`research/rules.md`](research/rules.md); repetition and per-piece
-   primary-source verification remain)*
-2. **Rules engine + viewer** ✅ — `solver/` (Rust) and `viewer/` (static browser app). Engine done
-   and tested: move-gen with sliders, capture-flip promotion, either-face drops,
-   king-capture terminal; unit tests + `perft` self-consistency (`research/repro/perft.txt`).
-3. **Calibration solves** ✅ — KP solved in RAM: 457,993 canonical reachable positions,
-   start value draw, max DTM 29, consistency audit + push-vs-pull cross-check. KPG solved on
-   a 64 GB Hetzner box: 869,287,068 canonical reachable positions, start value draw, max DTM
-   155, audit PASS. Run artifacts and method notes live in [`research/runs/`](research/runs/)
-   and [`research/solver-methods.md`](research/solver-methods.md). 4×4 is still the
-   recommended full-pipeline de-risk run.
-4. **Full strong solve** on bare-metal — only after 1–3. *(open)*
+Micro Shogi sits above two earlier small drop-shogi projects:
 
-## Layout
+- [Dōbutsu Shōgi](https://brianhliou.com/posts/dobutsu-shogi/) is fully solved:
+  246,803,167 reachable positions.
+- [Shogi4](https://brianhliou.com/posts/shogi4/) is not fully solved, but it has
+  a validated dense-rank solver design and a 2,100,849,024-position closed run.
 
-```
+Micro Shogi is larger than Shogi4 as a full game, but the KPG calibration rung is
+smaller than the Shogi4 closed run because it removes Silver and Bishop. KPG is
+still important because it is where the convenient Micro Shogi solver hit the
+memory wall and where the Shogi4-style dense-rank method proved itself on Micro
+Shogi data.
+
+## Repository layout
+
+```text
 research/
-  session-2026-06-05.md — full session record: all data, Q&A, open questions, next steps
-  rules.md           — the exact ruleset the solver is built against (milestone #1)
-  findings.md        — verified facts ledger (numbers + sources)
-  open-questions.md  — the backlog (ruleset, exact reachable count, calibration)
-  cost-model.md      — $ analysis with 2026 cloud/bare-metal pricing
-  architecture.md    — distributed strong-solve design (SCC staging, coordinator, hurdles)
-  solver-methods.md  — HashMap/CSR vs dense-rank/unmove tradeoffs
-  funding.md         — funding/collaboration strategy + live 2026 programs (verified)
-  runs/
-    README.md        — KPG rerun protocol + analysis checklist
-  repro/
-    statespace_upperbound.py  — the validated enumerator
-    upper_bound.txt           — its committed output
-viewer/
-  index.html        — standalone legal-move viewer (open directly in a browser)
-  rules.js          — tested JavaScript port of the Micro Shogi rules
+  findings.md        verified facts ledger and current estimates
+  solver-methods.md  reachable-CSR versus dense-rank/unmove tradeoffs
+  rules.md           ruleset implemented by the solver
+  cost-model.md      full-solve sizing and cost estimates
+  architecture.md    distributed strong-solve design notes
+  runs/              committed run summaries, logs, and JSON reports
+  repro/             state-space upper-bound reproduction scripts
 solver/
-  src/lib.rs        — Rust rules engine
-  src/retro.rs      — pull + push retrograde calibration solvers
+  src/lib.rs         Rust rules engine
+  src/retro.rs       pull and push retrograde calibration solvers
+  src/dense_kpg.rs   KPG dense-rank comparison solver
+viewer/
+  index.html         standalone legal-move viewer
+  rules.js           JavaScript rules engine used by the viewer
 ```
 
-## Primary sources to establish
+Large binary table artifacts are intentionally ignored. The KPG table dump is
+17.4 GB raw and 2.18 GB compressed; this repo stores the small reports and
+checksums, not the table itself.
 
-- A primary/authoritative source for **per-piece Micro Shogi movement** beyond "standard shogi
-  equivalents."
-- Tanaka 2009 (Dōbutsu) — the methodological anchor, in the sibling repo.
-- Minishogi reachable-count estimate: *Estimating the number of reachable positions in
-  Minishogi*, arXiv:2409.00129.
+## Useful commands
+
+Run the solver checks:
+
+```sh
+cargo test --manifest-path solver/Cargo.toml
+cargo check --manifest-path solver/Cargo.toml --bin solve_dense_kpg
+```
+
+Run the dense KPG solver on a machine with enough time and memory:
+
+```sh
+cargo run --manifest-path solver/Cargo.toml --release --bin solve_dense_kpg -- \
+  --out-dir research/runs/dense-kpg-local
+```
+
+Open `viewer/index.html` in a browser to use the standalone legal-move viewer.
+
+## Open work
+
+- Confirm any remaining Micro Shogi rules gaps against a primary source or an
+  independent engine.
+- Replace the full-game reachable-count estimate with an exact enumeration.
+- Generalize dense rank/unrank and predecessor generation beyond KPG.
+- Run a distributed rehearsal before attempting a full Micro Shogi tablebase.
