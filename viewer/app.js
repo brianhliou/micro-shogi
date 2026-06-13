@@ -192,13 +192,26 @@
     const dy = end.y - start.y;
     const len = Math.hypot(dx, dy);
     if (len < 1) return "";
-    const trimStart = 24;
-    const trimEnd = 35;
-    const sx = start.x + (dx / len) * trimStart;
-    const sy = start.y + (dy / len) * trimStart;
-    const ex = end.x - (dx / len) * trimEnd;
-    const ey = end.y - (dy / len) * trimEnd;
-    return `<line class="move-preview-line" x1="${sx.toFixed(2)}" y1="${sy.toFixed(2)}" x2="${ex.toFixed(2)}" y2="${ey.toFixed(2)}" marker-end="url(#move-preview-head)"/>`;
+    const ux = dx / len;
+    const uy = dy / len;
+    const px = -uy;
+    const py = ux;
+    const cell = 100;
+    const shaftWidth = cell * 0.12;
+    const headLength = cell * 0.32;
+    const headHalfWidth = cell * 0.2;
+    const sx = start.x + ux * cell * 0.22;
+    const sy = start.y + uy * cell * 0.22;
+    const tipX = end.x - ux * cell * 0.06;
+    const tipY = end.y - uy * cell * 0.06;
+    const baseX = tipX - ux * headLength;
+    const baseY = tipY - uy * headLength;
+    return [
+      '<g class="move-preview-arrow">',
+      `<line class="move-preview-line" x1="${sx.toFixed(2)}" y1="${sy.toFixed(2)}" x2="${baseX.toFixed(2)}" y2="${baseY.toFixed(2)}" stroke-width="${shaftWidth.toFixed(2)}"/>`,
+      `<polygon class="move-preview-head" points="${tipX.toFixed(2)},${tipY.toFixed(2)} ${(baseX + px * headHalfWidth).toFixed(2)},${(baseY + py * headHalfWidth).toFixed(2)} ${(baseX - px * headHalfWidth).toFixed(2)},${(baseY - py * headHalfWidth).toFixed(2)}"/>`,
+      "</g>",
+    ].join("");
   }
 
   function renderMovePreview() {
@@ -211,11 +224,6 @@
     svg.setAttribute("viewBox", `0 0 ${rules.NFILE * 100} ${rules.NRANK * 100}`);
     svg.setAttribute("aria-hidden", "true");
     svg.innerHTML = [
-      "<defs>",
-      '<marker id="move-preview-head" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">',
-      '<path d="M0,0 L12,6 L0,12 Z" fill="currentColor"/>',
-      "</marker>",
-      "</defs>",
       hoverMove.type === "move" ? arrowPath(hoverMove.from, hoverMove.to) : "",
       hoverMove.type === "drop" ? `<circle class="move-preview-drop" cx="${to.x}" cy="${to.y}" r="28"/>` : "",
     ].join("");

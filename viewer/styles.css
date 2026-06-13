@@ -257,11 +257,18 @@ button {
   overflow: visible;
 }
 
+.move-preview-arrow {
+  opacity: 0.9;
+  filter: drop-shadow(0 2px 2px rgba(43, 29, 8, 0.3));
+}
+
 .move-preview-line {
   stroke: currentColor;
-  stroke-width: 10;
   stroke-linecap: round;
-  filter: drop-shadow(0 2px 2px rgba(43, 29, 8, 0.3));
+}
+
+.move-preview-head {
+  fill: currentColor;
 }
 
 .move-preview-drop {
